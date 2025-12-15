@@ -1,0 +1,19 @@
+{
+    "name": "Void2610.SettingsSystem",
+    "rootNamespace": "Void2610.SettingsSystem",
+    "references": [
+        "UniTask",
+        "R3.Unity",
+        "VContainer",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
