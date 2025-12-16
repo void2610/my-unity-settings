@@ -24,15 +24,11 @@ namespace Void2610.SettingsSystem
         /// </summary>
         public bool RequiresConfirmation => requiresConfirmation;
 
-        /// <summary>
-        /// 確認ダイアログのメッセージ
-        /// </summary>
         public string ConfirmationMessage => confirmationMessage;
 
-        /// <summary>
-        /// ボタンアクション実行用のデリゲート
-        /// </summary>
-        public Action ButtonAction { get; set; }
+        public Observable<Unit> OnButtonClicked => _onButtonClicked;
+
+        private readonly Subject<Unit> _onButtonClicked = new();
 
         public ButtonSetting(string name, string desc, string btnText, bool needsConfirmation = false, string confirmMsg = "")
             : base(name, desc, Unit.Default)
@@ -44,17 +40,13 @@ namespace Void2610.SettingsSystem
 
         public ButtonSetting()
         {
-            // シリアライゼーション用のデフォルトコンストラクタ
             buttonText = "実行";
         }
 
-        /// <summary>
-        /// ボタンがクリックされた時に呼び出される
-        /// </summary>
         public void ExecuteAction()
         {
             CurrentValue = Unit.Default;
-            ButtonAction?.Invoke();
+            _onButtonClicked.OnNext(Unit.Default);
         }
     }
 }

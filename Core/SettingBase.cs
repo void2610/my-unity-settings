@@ -17,14 +17,7 @@ namespace Void2610.SettingsSystem
         [SerializeField] protected T currentValue;
         [SerializeField] protected T defaultValue;
 
-        /// <summary>
-        /// 設定項目の名前
-        /// </summary>
         public string SettingName => settingName;
-
-        /// <summary>
-        /// 設定項目の説明
-        /// </summary>
         public string Description => description;
 
         /// <summary>

@@ -120,19 +120,24 @@ namespace Void2610.SettingsSystem
                 .AddTo(_disposables);
         }
 
-        /// <summary>
-        /// SettingsManagerのデータをViewの形式に変換してViewに設定
-        /// </summary>
         private void RefreshSettingsView()
         {
-            var settingsData = _settingsManager.Settings.Select(ConvertToDisplayData).ToArray();
-            _settingsView.SetSettings(settingsData, _confirmationDialog);
+            var categoriesData = _settingsManager.Categories
+                .Select(ConvertToCategoryDisplayData)
+                .ToArray();
+            _settingsView.SetCategories(categoriesData, _confirmationDialog);
         }
 
-        /// <summary>
-        /// ISettingBaseをSettingDisplayDataに変換
-        /// </summary>
-        private SettingsView.SettingDisplayData ConvertToDisplayData(ISettingBase setting)
+        private SettingsView.CategoryDisplayData ConvertToCategoryDisplayData(SettingsCategory category)
+        {
+            return new SettingsView.CategoryDisplayData
+            {
+                name = category.Name,
+                settings = category.Settings.Select(ConvertToSettingDisplayData).ToArray()
+            };
+        }
+
+        private SettingsView.SettingDisplayData ConvertToSettingDisplayData(ISettingBase setting)
         {
             var data = new SettingsView.SettingDisplayData
             {

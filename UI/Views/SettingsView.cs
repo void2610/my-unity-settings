@@ -22,6 +22,10 @@ namespace Void2610.SettingsSystem
         [SerializeField] private Transform settingsContainer;
         [SerializeField] private Button closeButton;
 
+        [Header("タブUI")]
+        [SerializeField] private Transform tabContainer;
+        [SerializeField] private GameObject tabButtonPrefab;
+
         [Header("設定項目プレハブ")]
         [SerializeField] private GameObject settingsContentContainerPrefab;
         [SerializeField] private GameObject titleTextPrefab;
@@ -45,13 +49,22 @@ namespace Void2610.SettingsSystem
         private readonly Subject<Unit> _onCloseRequested = new();
         private readonly List<GameObject> _settingUIObjects = new();
         private readonly List<ISettingItemNavigatable> _settingItems = new();
+        private readonly List<Button> _tabButtons = new();
+        private readonly Dictionary<string, List<GameObject>> _categoryContainers = new();
         private readonly CompositeDisposable _disposables = new();
         private readonly CompositeDisposable _itemSubscriptions = new();
+        private readonly CompositeDisposable _tabSubscriptions = new();
         private IConfirmationDialog _confirmationDialog;
+        private string _currentCategory;
+        private string[] _categories;
 
-        /// <summary>
-        /// 設定データ構造体
-        /// </summary>
+        [Serializable]
+        public struct CategoryDisplayData
+        {
+            public string name;
+            public SettingDisplayData[] settings;
+        }
+
         [Serializable]
         public struct SettingDisplayData
         {
@@ -76,20 +89,37 @@ namespace Void2610.SettingsSystem
             Button
         }
 
-        /// <summary>
-        /// 外部から設定データを注入してUIを更新
-        /// </summary>
-        public void SetSettings(SettingDisplayData[] settingsData, IConfirmationDialog confirmationDialog)
+        public void SetCategories(CategoryDisplayData[] categoriesData, IConfirmationDialog confirmationDialog)
         {
             _confirmationDialog = confirmationDialog;
 
             ClearSettingsUI();
 
-            // 各設定項目のUIを生成
-            foreach (var settingData in settingsData)
-                CreateSettingUI(settingData);
+            _categories = categoriesData.Select(c => c.name).ToArray();
 
-            // Selectableのナビゲーションを設定
+            // タブUIを生成（複数カテゴリがある場合のみ）
+            if (_categories.Length > 1 && tabContainer && tabButtonPrefab)
+            {
+                CreateTabs();
+            }
+
+            // カテゴリごとに設定項目を生成
+            foreach (var categoryData in categoriesData)
+            {
+                _categoryContainers[categoryData.name] = new List<GameObject>();
+
+                foreach (var settingData in categoryData.settings)
+                {
+                    CreateSettingUI(settingData, categoryData.name);
+                }
+            }
+
+            // 最初のカテゴリを表示
+            if (_categories.Length > 0)
+            {
+                SwitchCategory(_categories[0]);
+            }
+
             SetupNavigation();
         }
 
@@ -104,9 +134,97 @@ namespace Void2610.SettingsSystem
         }
 
         /// <summary>
+        /// タブUIを生成
+        /// </summary>
+        private void CreateTabs()
+        {
+            for (var i = 0; i < _categories.Length; i++)
+            {
+                var category = _categories[i];
+                var tabObject = Instantiate(tabButtonPrefab, tabContainer);
+                var tabButton = tabObject.GetComponent<Button>();
+                var tabText = tabObject.GetComponentInChildren<TextMeshProUGUI>();
+
+                if (tabText)
+                {
+                    tabText.text = category;
+                }
+
+                var capturedCategory = category;
+                tabButton.OnClickAsObservable()
+                    .Subscribe(_ => SwitchCategory(capturedCategory))
+                    .AddTo(_tabSubscriptions);
+
+                _tabButtons.Add(tabButton);
+            }
+
+            // タブボタンの横ナビゲーションを設定
+            SetupTabNavigation();
+        }
+
+        /// <summary>
+        /// タブボタンのナビゲーションを設定
+        /// </summary>
+        private void SetupTabNavigation()
+        {
+            if (_tabButtons.Count == 0) return;
+
+            var selectables = _tabButtons.Select(b => (Selectable)b).ToList();
+            selectables.SetNavigation(isHorizontal: true, wrapAround: true);
+        }
+
+        /// <summary>
+        /// カテゴリを切り替え
+        /// </summary>
+        private void SwitchCategory(string category)
+        {
+            if (_currentCategory == category) return;
+
+            _currentCategory = category;
+
+            // 全カテゴリの設定項目を非表示
+            foreach (var containers in _categoryContainers.Values)
+            {
+                foreach (var container in containers)
+                {
+                    if (container) container.SetActive(false);
+                }
+            }
+
+            // 選択カテゴリの設定項目を表示
+            if (_categoryContainers.TryGetValue(category, out var visibleContainers))
+            {
+                foreach (var container in visibleContainers)
+                {
+                    if (container) container.SetActive(true);
+                }
+            }
+
+            // タブボタンの見た目を更新
+            UpdateTabButtonVisuals();
+
+            // ナビゲーションを再設定
+            SetupNavigation();
+        }
+
+        /// <summary>
+        /// タブボタンの見た目を更新（選択状態の表示）
+        /// </summary>
+        private void UpdateTabButtonVisuals()
+        {
+            for (var i = 0; i < _tabButtons.Count && i < _categories.Length; i++)
+            {
+                var isSelected = _categories[i] == _currentCategory;
+                var colors = _tabButtons[i].colors;
+                colors.normalColor = isSelected ? new Color(0.8f, 0.8f, 0.8f, 1f) : Color.white;
+                _tabButtons[i].colors = colors;
+            }
+        }
+
+        /// <summary>
         /// 設定項目のUIを生成
         /// </summary>
-        private void CreateSettingUI(SettingDisplayData settingData)
+        private void CreateSettingUI(SettingDisplayData settingData, string category)
         {
             // 設定項目のコンテナを作成（横並び用）
             var containerObject = Instantiate(settingsContentContainerPrefab, settingsContainer);
@@ -128,6 +246,7 @@ namespace Void2610.SettingsSystem
             }
 
             _settingUIObjects.Add(containerObject);
+            _categoryContainers[category].Add(containerObject);
         }
 
         /// <summary>
@@ -218,33 +337,63 @@ namespace Void2610.SettingsSystem
         /// </summary>
         private void SetupNavigation()
         {
-            var selectables = _settingItems
+            // 現在のカテゴリの設定項目のみを対象にする
+            var visibleSelectables = _settingItems
+                .Where(item => item.SelectableGameObject && item.SelectableGameObject.activeInHierarchy)
                 .Select(item => item.SelectableGameObject.GetComponent<Selectable>())
                 .Where(s => s)
                 .ToList();
 
-            if (selectables.Count == 0) return;
+            if (visibleSelectables.Count == 0) return;
 
             // 垂直ナビゲーションを設定（isHorizontal=false, wrapAround=false）
-            selectables.SetNavigation(isHorizontal: false, wrapAround: false);
+            visibleSelectables.SetNavigation(isHorizontal: false, wrapAround: false);
 
-            // closeButtonの下ナビゲーション → 最初の設定項目
-            // closeButtonの上ナビゲーション → 最後の設定項目
-            var closeButtonNav = closeButton.navigation;
-            closeButtonNav.mode = UINavigation.Mode.Explicit;
-            closeButtonNav.selectOnDown = selectables[0];
-            closeButtonNav.selectOnUp = selectables[^1];
-            closeButton.navigation = closeButtonNav;
+            // タブがある場合はタブからのナビゲーションも設定
+            if (_tabButtons.Count > 0)
+            {
+                // タブボタンの下ナビゲーション → 最初の設定項目
+                foreach (var tabButton in _tabButtons)
+                {
+                    var tabNav = tabButton.navigation;
+                    tabNav.selectOnDown = visibleSelectables[0];
+                    tabButton.navigation = tabNav;
+                }
 
-            // 最初の設定項目の上ナビゲーション → closeButton
-            var firstItemNav = selectables[0].navigation;
-            firstItemNav.selectOnUp = closeButton;
-            selectables[0].navigation = firstItemNav;
+                // 最初の設定項目の上ナビゲーション → 現在選択中のタブ
+                var currentTabIndex = Array.IndexOf(_categories, _currentCategory);
+                if (currentTabIndex >= 0 && currentTabIndex < _tabButtons.Count)
+                {
+                    var firstItemNav = visibleSelectables[0].navigation;
+                    firstItemNav.selectOnUp = _tabButtons[currentTabIndex];
+                    visibleSelectables[0].navigation = firstItemNav;
+                }
+            }
+            else
+            {
+                // タブがない場合はcloseButtonとのナビゲーション
+                var closeButtonNav = closeButton.navigation;
+                closeButtonNav.mode = UINavigation.Mode.Explicit;
+                closeButtonNav.selectOnDown = visibleSelectables[0];
+                closeButtonNav.selectOnUp = visibleSelectables[^1];
+                closeButton.navigation = closeButtonNav;
+
+                // 最初の設定項目の上ナビゲーション → closeButton
+                var firstItemNav = visibleSelectables[0].navigation;
+                firstItemNav.selectOnUp = closeButton;
+                visibleSelectables[0].navigation = firstItemNav;
+            }
 
             // 最後の設定項目の下ナビゲーション → closeButton
-            var lastItemNav = selectables[^1].navigation;
+            var lastItemNav = visibleSelectables[^1].navigation;
             lastItemNav.selectOnDown = closeButton;
-            selectables[^1].navigation = lastItemNav;
+            visibleSelectables[^1].navigation = lastItemNav;
+
+            // closeButtonの上ナビゲーション → 最後の設定項目
+            var closeNav = closeButton.navigation;
+            closeNav.mode = UINavigation.Mode.Explicit;
+            closeNav.selectOnUp = visibleSelectables[^1];
+            closeButton.navigation = closeNav;
         }
 
         /// <summary>
@@ -253,9 +402,19 @@ namespace Void2610.SettingsSystem
         private void ClearSettingsUI()
         {
             _settingItems.Clear();
+            _currentCategory = null;
 
             // Subscriptionをクリア
             _itemSubscriptions.Clear();
+            _tabSubscriptions.Clear();
+
+            // タブボタンをDestroy
+            foreach (var tabButton in _tabButtons.Where(t => t))
+                DestroyImmediate(tabButton.gameObject);
+            _tabButtons.Clear();
+
+            // カテゴリコンテナをクリア
+            _categoryContainers.Clear();
 
             // UI要素をDestroy
             foreach (var uiObject in _settingUIObjects.Where(uiObject => uiObject))
@@ -274,6 +433,7 @@ namespace Void2610.SettingsSystem
         {
             _disposables.Dispose();
             _itemSubscriptions.Dispose();
+            _tabSubscriptions.Dispose();
             _onSliderChanged?.Dispose();
             _onEnumChanged?.Dispose();
             _onButtonClicked?.Dispose();
