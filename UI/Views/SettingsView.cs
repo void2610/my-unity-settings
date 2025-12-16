@@ -39,9 +39,19 @@ namespace Void2610.SettingsSystem
         public Observable<Unit> OnCloseRequested => _onCloseRequested;
 
         /// <summary>
-        /// 最初の設定項目のGameObject（ナビゲーション用）
+        /// 現在のカテゴリの最初の設定項目のGameObject（ナビゲーション用）
         /// </summary>
-        public GameObject FirstSettingItem => _settingItems.Count > 0 ? _settingItems[0].SelectableGameObject : null;
+        public GameObject FirstSettingItem
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_currentCategory) ||
+                    !_categorySettingItems.TryGetValue(_currentCategory, out var items) ||
+                    items.Count == 0)
+                    return null;
+                return items[0].SelectableGameObject;
+            }
+        }
 
         private readonly Subject<(string settingName, float value)> _onSliderChanged = new();
         private readonly Subject<(string settingName, string value)> _onEnumChanged = new();
@@ -51,6 +61,7 @@ namespace Void2610.SettingsSystem
         private readonly List<ISettingItemNavigatable> _settingItems = new();
         private readonly List<Button> _tabButtons = new();
         private readonly Dictionary<string, List<GameObject>> _categoryContainers = new();
+        private readonly Dictionary<string, List<ISettingItemNavigatable>> _categorySettingItems = new();
         private readonly CompositeDisposable _disposables = new();
         private readonly CompositeDisposable _itemSubscriptions = new();
         private readonly CompositeDisposable _tabSubscriptions = new();
@@ -93,6 +104,10 @@ namespace Void2610.SettingsSystem
         {
             _confirmationDialog = confirmationDialog;
 
+            // 現在のカテゴリを保存（再表示時に復元するため）
+            var previousCategory = _currentCategory;
+            _currentCategory = null;
+
             ClearSettingsUI();
 
             _categories = categoriesData.Select(c => c.name).ToArray();
@@ -107,6 +122,7 @@ namespace Void2610.SettingsSystem
             foreach (var categoryData in categoriesData)
             {
                 _categoryContainers[categoryData.name] = new List<GameObject>();
+                _categorySettingItems[categoryData.name] = new List<ISettingItemNavigatable>();
 
                 foreach (var settingData in categoryData.settings)
                 {
@@ -114,10 +130,11 @@ namespace Void2610.SettingsSystem
                 }
             }
 
-            // 最初のカテゴリを表示
+            // 前回のカテゴリを復元、存在しなければ最初のカテゴリを表示
             if (_categories.Length > 0)
             {
-                SwitchCategory(_categories[0]);
+                var targetCategory = _categories.Contains(previousCategory) ? previousCategory : _categories[0];
+                SwitchCategory(targetCategory);
             }
 
             SetupNavigation();
@@ -232,17 +249,18 @@ namespace Void2610.SettingsSystem
             CreateTitleText(containerObject.transform, settingData.displayName);
 
             // 設定固有のUIを作成（右側）
-            switch (settingData.type)
+            ISettingItemNavigatable settingItem = settingData.type switch
             {
-                case SettingType.Slider:
-                    CreateSliderUI(settingData, containerObject.transform);
-                    break;
-                case SettingType.Button:
-                    CreateButtonUI(settingData, containerObject.transform);
-                    break;
-                case SettingType.Enum:
-                    CreateEnumUI(settingData, containerObject.transform);
-                    break;
+                SettingType.Slider => CreateSliderUI(settingData, containerObject.transform),
+                SettingType.Button => CreateButtonUI(settingData, containerObject.transform),
+                SettingType.Enum => CreateEnumUI(settingData, containerObject.transform),
+                _ => null
+            };
+
+            if (settingItem != null)
+            {
+                _settingItems.Add(settingItem);
+                _categorySettingItems[category].Add(settingItem);
             }
 
             _settingUIObjects.Add(containerObject);
@@ -282,7 +300,7 @@ namespace Void2610.SettingsSystem
         /// <summary>
         /// スライダー設定のUIを生成
         /// </summary>
-        private void CreateSliderUI(SettingDisplayData settingData, Transform parent)
+        private ISettingItemNavigatable CreateSliderUI(SettingDisplayData settingData, Transform parent)
         {
             var uiObject = Instantiate(sliderSettingPrefab, parent);
             var settingItem = uiObject.GetComponent<SliderSettingItem>();
@@ -292,13 +310,13 @@ namespace Void2610.SettingsSystem
                 .Subscribe(data => _onSliderChanged.OnNext((data.settingName, (float)data.value)))
                 .AddTo(_itemSubscriptions);
 
-            _settingItems.Add(settingItem);
+            return settingItem;
         }
 
         /// <summary>
         /// ボタン設定のUIを生成
         /// </summary>
-        private void CreateButtonUI(SettingDisplayData settingData, Transform parent)
+        private ISettingItemNavigatable CreateButtonUI(SettingDisplayData settingData, Transform parent)
         {
             var uiObject = Instantiate(buttonSettingPrefab, parent);
             var settingItem = uiObject.GetComponent<ButtonSettingItem>();
@@ -313,13 +331,13 @@ namespace Void2610.SettingsSystem
                 })
                 .AddTo(_itemSubscriptions);
 
-            _settingItems.Add(settingItem);
+            return settingItem;
         }
 
         /// <summary>
         /// Enum設定のUIを生成
         /// </summary>
-        private void CreateEnumUI(SettingDisplayData settingData, Transform parent)
+        private ISettingItemNavigatable CreateEnumUI(SettingDisplayData settingData, Transform parent)
         {
             var uiObject = Instantiate(enumSettingPrefab, parent);
             var settingItem = uiObject.GetComponent<EnumSettingItem>();
@@ -329,7 +347,7 @@ namespace Void2610.SettingsSystem
                 .Subscribe(data => _onEnumChanged.OnNext((data.settingName, (string)data.value)))
                 .AddTo(_itemSubscriptions);
 
-            _settingItems.Add(settingItem);
+            return settingItem;
         }
 
         /// <summary>
@@ -337,9 +355,13 @@ namespace Void2610.SettingsSystem
         /// </summary>
         private void SetupNavigation()
         {
-            // 現在のカテゴリの設定項目のみを対象にする
-            var visibleSelectables = _settingItems
-                .Where(item => item.SelectableGameObject && item.SelectableGameObject.activeInHierarchy)
+            // 現在のカテゴリの設定項目のみを対象にする（activeInHierarchyではなくカテゴリで判定）
+            if (string.IsNullOrEmpty(_currentCategory) ||
+                !_categorySettingItems.TryGetValue(_currentCategory, out var categoryItems))
+                return;
+
+            var visibleSelectables = categoryItems
+                .Where(item => item.SelectableGameObject)
                 .Select(item => item.SelectableGameObject.GetComponent<Selectable>())
                 .Where(s => s)
                 .ToList();
@@ -402,7 +424,6 @@ namespace Void2610.SettingsSystem
         private void ClearSettingsUI()
         {
             _settingItems.Clear();
-            _currentCategory = null;
 
             // Subscriptionをクリア
             _itemSubscriptions.Clear();
@@ -415,6 +436,7 @@ namespace Void2610.SettingsSystem
 
             // カテゴリコンテナをクリア
             _categoryContainers.Clear();
+            _categorySettingItems.Clear();
 
             // UI要素をDestroy
             foreach (var uiObject in _settingUIObjects.Where(uiObject => uiObject))
