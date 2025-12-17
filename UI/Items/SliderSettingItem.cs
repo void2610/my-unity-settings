@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using R3;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ namespace Void2610.SettingsSystem
     public sealed class SliderSettingItem : MonoBehaviour, ISettingItemNavigatable
     {
         public GameObject SelectableGameObject => _slider.gameObject;
+        public IEnumerable<GameObject> AllSelectableGameObjects => new[] { _slider.gameObject };
         public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;
 
         private const float NAVIGATION_STEP = 0.05f;

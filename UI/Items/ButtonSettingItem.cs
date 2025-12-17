@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using R3;
 using TMPro;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace Void2610.SettingsSystem
     public sealed class ButtonSettingItem : MonoBehaviour, ISettingItemNavigatable
     {
         public GameObject SelectableGameObject => _button.gameObject;
+        public IEnumerable<GameObject> AllSelectableGameObjects => new[] { _button.gameObject };
         public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;
 
         private readonly Subject<(string settingName, object value)> _onValueChanged = new();

@@ -233,9 +233,10 @@ namespace Void2610.SettingsSystem
                 _settingItems.Add(settingItem);
                 _categorySettingItems[category].Add(settingItem);
 
-                // 説明文をGameObjectに紐付け
-                if (settingItem.SelectableGameObject)
-                    _settingDescriptions[settingItem.SelectableGameObject] = settingData.description ?? "";
+                // 説明文を全てのSelectableGameObjectに紐付け
+                var description = settingData.description ?? "";
+                foreach (var selectableGo in settingItem.AllSelectableGameObjects)
+                    if (selectableGo) _settingDescriptions[selectableGo] = description;
             }
 
             _settingUIObjects.Add(containerObject);

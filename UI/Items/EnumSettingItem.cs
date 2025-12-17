@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Codice.CM.Common;
 using R3;
 using TMPro;
 using UnityEngine;
@@ -16,7 +18,8 @@ namespace Void2610.SettingsSystem
         [SerializeField] private Button nextButton;
         [SerializeField] private TextMeshProUGUI valueText;
 
-        public GameObject SelectableGameObject => gameObject;
+        public GameObject SelectableGameObject => prevButton.gameObject;
+        public IEnumerable<GameObject> AllSelectableGameObjects => new[] { prevButton.gameObject, this.gameObject, nextButton.gameObject };
         public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;
 
         private readonly Subject<(string settingName, object value)> _onValueChanged = new();
