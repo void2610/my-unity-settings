@@ -9,7 +9,7 @@ namespace Void2610.SettingsSystem
     /// 左右ナビゲーションでスライダー値を変更
     /// </summary>
     [RequireComponent(typeof(Slider))]
-    public class SliderSettingItem : MonoBehaviour, ISettingItemNavigatable
+    public sealed class SliderSettingItem : MonoBehaviour, ISettingItemNavigatable
     {
         public GameObject SelectableGameObject => _slider.gameObject;
         public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;

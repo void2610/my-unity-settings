@@ -9,7 +9,7 @@ namespace Void2610.SettingsSystem
     /// 解像度切り替えや品質設定などに使用
     /// </summary>
     [Serializable]
-    public class EnumSetting : SettingBase<string>
+    public sealed class EnumSetting : SettingBase<string>
     {
         [SerializeField] private string[] options;
         [SerializeField] private string[] displayNames; // 表示用の名前（オプション）

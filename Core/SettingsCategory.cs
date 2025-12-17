@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Void2610.SettingsSystem
 {
-    public class SettingsCategory
+    public sealed class SettingsCategory
     {
         public string Name { get; }
         public IReadOnlyList<ISettingBase> Settings { get; }

@@ -12,7 +12,7 @@ namespace Void2610.SettingsSystem
     /// MVPパターンに基づいてViewとModelを分離
     /// ウィンドウの表示/非表示はプロジェクト側で管理
     /// </summary>
-    public class SettingsPresenter : IStartable, IDisposable
+    public sealed class SettingsPresenter : IStartable, IDisposable
     {
         /// <summary>
         /// 設定画面の表示要求イベント

@@ -10,7 +10,7 @@ namespace Void2610.SettingsSystem
     /// Submit操作でボタンクリックを実行
     /// </summary>
     [RequireComponent(typeof(Button))]
-    public class ButtonSettingItem : MonoBehaviour, ISettingItemNavigatable
+    public sealed class ButtonSettingItem : MonoBehaviour, ISettingItemNavigatable
     {
         public GameObject SelectableGameObject => _button.gameObject;
         public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;

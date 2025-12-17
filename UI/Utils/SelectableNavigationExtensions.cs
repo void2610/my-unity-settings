@@ -6,7 +6,7 @@ namespace Void2610.SettingsSystem
     /// <summary>
     /// Selectableのナビゲーション設定用拡張メソッド
     /// </summary>
-    public static class SelectableNavigationExtensions
+    internal static class SelectableNavigationExtensions
     {
         /// <summary>
         /// UI Selectableのリストにナビゲーションを設定

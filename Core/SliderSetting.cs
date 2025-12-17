@@ -7,7 +7,7 @@ namespace Void2610.SettingsSystem
     /// スライダー形式の設定項目（音量設定など）
     /// </summary>
     [Serializable]
-    public class SliderSetting : SettingBase<float>
+    public sealed class SliderSetting : SettingBase<float>
     {
         [SerializeField] private float minValue;
         [SerializeField] private float maxValue;

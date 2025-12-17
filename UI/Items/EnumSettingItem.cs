@@ -10,7 +10,7 @@ namespace Void2610.SettingsSystem
     /// Enum形式の設定項目UI
     /// 左右ナビゲーションで選択肢を切り替え
     /// </summary>
-    public class EnumSettingItem : MonoBehaviour, ISettingItemNavigatable
+    public sealed class EnumSettingItem : MonoBehaviour, ISettingItemNavigatable
     {
         [SerializeField] private Button prevButton;
         [SerializeField] private Button nextButton;

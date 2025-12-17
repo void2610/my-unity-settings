@@ -7,7 +7,7 @@ using VContainer.Unity;
 
 namespace Void2610.SettingsSystem
 {
-    public class SettingsManager : IStartable, IDisposable
+    public sealed class SettingsManager : IStartable, IDisposable
     {
         public IReadOnlyList<SettingsCategory> Categories => _categories;
         public Observable<string> OnSettingChanged => _onSettingChanged;
@@ -140,7 +140,7 @@ namespace Void2610.SettingsSystem
     /// 設定データのシリアライゼーション用クラス
     /// </summary>
     [Serializable]
-    public class SettingsData
+    internal sealed class SettingsData
     {
         public List<SettingEntry> entries = new();
 
@@ -180,7 +180,7 @@ namespace Void2610.SettingsSystem
     /// 設定エントリのシリアライゼーション用クラス
     /// </summary>
     [Serializable]
-    public class SettingEntry
+    internal sealed class SettingEntry
     {
         public string key;
         public string value;

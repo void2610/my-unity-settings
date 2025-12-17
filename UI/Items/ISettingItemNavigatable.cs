@@ -7,7 +7,7 @@ namespace Void2610.SettingsSystem
     /// 設定項目のナビゲーション操作を定義するインターフェース
     /// キーボード/ゲームパッドでの上下左右・決定操作を統一的に扱う
     /// </summary>
-    public interface ISettingItemNavigatable
+    internal interface ISettingItemNavigatable
     {
         /// <summary>
         /// EventSystemで選択可能なGameObject

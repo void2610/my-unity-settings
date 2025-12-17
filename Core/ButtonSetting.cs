@@ -8,7 +8,7 @@ namespace Void2610.SettingsSystem
     /// ボタン形式の設定項目（セーブデータ削除など）
     /// </summary>
     [Serializable]
-    public class ButtonSetting : SettingBase<Unit>
+    public sealed class ButtonSetting : SettingBase<Unit>
     {
         [SerializeField] private string buttonText;
         [SerializeField] private bool requiresConfirmation;

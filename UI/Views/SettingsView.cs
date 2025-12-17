@@ -16,7 +16,7 @@ namespace Void2610.SettingsSystem
     /// 設定項目の生成とイベント通知のみを担当
     /// ウィンドウの表示/非表示はプロジェクト側で管理
     /// </summary>
-    public class SettingsView : MonoBehaviour
+    public sealed class SettingsView : MonoBehaviour
     {
         [Header("UI設定")]
         [SerializeField] private Transform settingsContainer;
