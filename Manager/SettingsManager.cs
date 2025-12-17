@@ -10,7 +10,6 @@ namespace Void2610.SettingsSystem
     public sealed class SettingsManager : IStartable, IDisposable
     {
         public IReadOnlyList<SettingsCategory> Categories => _categories;
-        public Observable<string> OnSettingChanged => _onSettingChanged;
 
         private const string SETTINGS_KEY = "game_settings";
 
@@ -81,7 +80,7 @@ namespace Void2610.SettingsSystem
             }
         }
 
-        public void SaveSettings()
+        private void SaveSettings()
         {
             var settingsData = new SettingsData();
 
@@ -97,7 +96,7 @@ namespace Void2610.SettingsSystem
             DataPersistence.SaveData(SETTINGS_KEY, json);
         }
 
-        public void LoadSettings()
+        private void LoadSettings()
         {
             var json = DataPersistence.LoadData(SETTINGS_KEY);
             if (string.IsNullOrEmpty(json)) return;
