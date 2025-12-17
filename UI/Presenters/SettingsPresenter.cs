@@ -142,7 +142,8 @@ namespace Void2610.SettingsSystem
             var data = new SettingsView.SettingDisplayData
             {
                 name = setting.SettingName,
-                displayName = setting.SettingName
+                displayName = setting.SettingName,
+                description = setting.Description ?? ""
             };
 
             switch (setting)

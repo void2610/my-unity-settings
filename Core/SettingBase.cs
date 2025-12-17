@@ -115,6 +115,7 @@ namespace Void2610.SettingsSystem
     public interface ISettingBase
     {
         string SettingName { get; }
+        string Description { get; }
         Observable<Unit> OnSettingChanged { get; }
         void ResetToDefault();
         string SerializeValue();

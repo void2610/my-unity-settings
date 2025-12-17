@@ -19,14 +19,13 @@ namespace Void2610.SettingsSystem
     public sealed class SettingsView : MonoBehaviour
     {
         [Header("UI設定")]
+        [SerializeField] private Transform tabContainer;
         [SerializeField] private Transform settingsContainer;
+        [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private Button closeButton;
 
-        [Header("タブUI")]
-        [SerializeField] private Transform tabContainer;
+        [Header("プレハブ")]
         [SerializeField] private GameObject tabButtonPrefab;
-
-        [Header("設定項目プレハブ")]
         [SerializeField] private GameObject settingsContentContainerPrefab;
         [SerializeField] private GameObject titleTextPrefab;
         [SerializeField] private GameObject sliderSettingPrefab;
@@ -62,12 +61,14 @@ namespace Void2610.SettingsSystem
         private readonly List<Button> _tabButtons = new();
         private readonly Dictionary<string, List<GameObject>> _categoryContainers = new();
         private readonly Dictionary<string, List<ISettingItemNavigatable>> _categorySettingItems = new();
+        private readonly Dictionary<GameObject, string> _settingDescriptions = new();
         private readonly CompositeDisposable _disposables = new();
         private readonly CompositeDisposable _itemSubscriptions = new();
         private readonly CompositeDisposable _tabSubscriptions = new();
         private IConfirmationDialog _confirmationDialog;
         private string _currentCategory;
         private string[] _categories;
+        private GameObject _lastSelectedObject;
 
         [Serializable]
         public struct CategoryDisplayData
@@ -81,6 +82,7 @@ namespace Void2610.SettingsSystem
         {
             public string name;
             public string displayName;
+            public string description;
             public SettingType type;
             public float floatValue;
             public string stringValue;
@@ -113,10 +115,7 @@ namespace Void2610.SettingsSystem
             _categories = categoriesData.Select(c => c.name).ToArray();
 
             // タブUIを生成（複数カテゴリがある場合のみ）
-            if (_categories.Length > 1 && tabContainer && tabButtonPrefab)
-            {
-                CreateTabs();
-            }
+            if (_categories.Length > 1) CreateTabs();
 
             // カテゴリごとに設定項目を生成
             foreach (var categoryData in categoriesData)
@@ -161,31 +160,15 @@ namespace Void2610.SettingsSystem
                 var tabObject = Instantiate(tabButtonPrefab, tabContainer);
                 var tabButton = tabObject.GetComponent<Button>();
                 var tabText = tabObject.GetComponentInChildren<TextMeshProUGUI>();
-
-                if (tabText)
-                {
-                    tabText.text = category;
-                }
+                tabText.text = category;
 
                 var capturedCategory = category;
-                tabButton.OnClickAsObservable()
-                    .Subscribe(_ => SwitchCategory(capturedCategory))
-                    .AddTo(_tabSubscriptions);
-
+                tabButton.OnClickAsObservable().Subscribe(_ => SwitchCategory(capturedCategory)).AddTo(_tabSubscriptions);
                 _tabButtons.Add(tabButton);
             }
-
+            
             // タブボタンの横ナビゲーションを設定
-            SetupTabNavigation();
-        }
-
-        /// <summary>
-        /// タブボタンのナビゲーションを設定
-        /// </summary>
-        private void SetupTabNavigation()
-        {
             if (_tabButtons.Count == 0) return;
-
             var selectables = _tabButtons.Select(b => (Selectable)b).ToList();
             selectables.SetNavigation(isHorizontal: true, wrapAround: true);
         }
@@ -203,32 +186,17 @@ namespace Void2610.SettingsSystem
             foreach (var containers in _categoryContainers.Values)
             {
                 foreach (var container in containers)
-                {
                     if (container) container.SetActive(false);
-                }
             }
 
             // 選択カテゴリの設定項目を表示
             if (_categoryContainers.TryGetValue(category, out var visibleContainers))
             {
                 foreach (var container in visibleContainers)
-                {
                     if (container) container.SetActive(true);
-                }
             }
 
             // タブボタンの見た目を更新
-            UpdateTabButtonVisuals();
-
-            // ナビゲーションを再設定
-            SetupNavigation();
-        }
-
-        /// <summary>
-        /// タブボタンの見た目を更新（選択状態の表示）
-        /// </summary>
-        private void UpdateTabButtonVisuals()
-        {
             for (var i = 0; i < _tabButtons.Count && i < _categories.Length; i++)
             {
                 var isSelected = _categories[i] == _currentCategory;
@@ -236,6 +204,9 @@ namespace Void2610.SettingsSystem
                 colors.normalColor = isSelected ? new Color(0.8f, 0.8f, 0.8f, 1f) : Color.white;
                 _tabButtons[i].colors = colors;
             }
+
+            // ナビゲーションを再設定
+            SetupNavigation();
         }
 
         /// <summary>
@@ -249,7 +220,7 @@ namespace Void2610.SettingsSystem
             CreateTitleText(containerObject.transform, settingData.displayName);
 
             // 設定固有のUIを作成（右側）
-            ISettingItemNavigatable settingItem = settingData.type switch
+            var settingItem = settingData.type switch
             {
                 SettingType.Slider => CreateSliderUI(settingData, containerObject.transform),
                 SettingType.Button => CreateButtonUI(settingData, containerObject.transform),
@@ -261,6 +232,10 @@ namespace Void2610.SettingsSystem
             {
                 _settingItems.Add(settingItem);
                 _categorySettingItems[category].Add(settingItem);
+
+                // 説明文をGameObjectに紐付け
+                if (settingItem.SelectableGameObject)
+                    _settingDescriptions[settingItem.SelectableGameObject] = settingData.description ?? "";
             }
 
             _settingUIObjects.Add(containerObject);
@@ -437,6 +412,7 @@ namespace Void2610.SettingsSystem
             // カテゴリコンテナをクリア
             _categoryContainers.Clear();
             _categorySettingItems.Clear();
+            _settingDescriptions.Clear();
 
             // UI要素をDestroy
             foreach (var uiObject in _settingUIObjects.Where(uiObject => uiObject))
@@ -449,6 +425,15 @@ namespace Void2610.SettingsSystem
             closeButton.OnClickAsObservable()
                 .Subscribe(_ => _onCloseRequested.OnNext(Unit.Default))
                 .AddTo(_disposables);
+        }
+
+        private void Update()
+        {
+            var currentSelected = EventSystem.current?.currentSelectedGameObject;
+            if (!currentSelected || currentSelected == _lastSelectedObject) return;
+
+            _lastSelectedObject = currentSelected;
+            descriptionText.text = _settingDescriptions.GetValueOrDefault(currentSelected, "");
         }
 
         private void OnDestroy()
