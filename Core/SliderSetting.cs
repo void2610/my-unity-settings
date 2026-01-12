@@ -35,8 +35,8 @@ namespace Void2610.SettingsSystem
             }
         }
 
-        public SliderSetting(string name, string desc, float defaultVal, float min, float max)
-            : base(name, desc, defaultVal)
+        public SliderSetting(string key, string name, string desc, float defaultVal, float min, float max)
+            : base(key, name, desc, defaultVal)
         {
             minValue = min;
             maxValue = max;

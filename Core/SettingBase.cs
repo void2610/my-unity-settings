@@ -12,11 +12,16 @@ namespace Void2610.SettingsSystem
     [Serializable]
     public abstract class SettingBase<T> : ISettingBase
     {
+        [SerializeField] protected string settingKey;
         [SerializeField] protected string settingName;
         [SerializeField] protected string description;
         [SerializeField] protected T currentValue;
         [SerializeField] protected T defaultValue;
 
+        /// <summary>
+        /// 設定識別用のキー（パターンマッチングに使用）
+        /// </summary>
+        public string SettingKey => settingKey;
         public string SettingName => settingName;
         public string Description => description;
 
@@ -55,8 +60,9 @@ namespace Void2610.SettingsSystem
         private readonly Subject<Unit> _onSettingChanged = new();
         private readonly Subject<T> _onValueChanged = new();
 
-        protected SettingBase(string name, string desc, T defaultVal)
+        protected SettingBase(string key, string name, string desc, T defaultVal)
         {
+            settingKey = key;
             settingName = name;
             description = desc;
             defaultValue = defaultVal;
@@ -114,6 +120,10 @@ namespace Void2610.SettingsSystem
     /// </summary>
     public interface ISettingBase
     {
+        /// <summary>
+        /// 設定識別用のキー（パターンマッチングに使用）
+        /// </summary>
+        string SettingKey { get; }
         string SettingName { get; }
         string Description { get; }
         Observable<Unit> OnSettingChanged { get; }

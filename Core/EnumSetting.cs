@@ -51,15 +51,15 @@ namespace Void2610.SettingsSystem
             }
         }
 
-        public EnumSetting(string name, string desc, string[] opts, string defaultValue = null, string[] displayNames = null)
-            : base(name, desc, defaultValue ?? (opts?.FirstOrDefault() ?? ""))
+        public EnumSetting(string key, string name, string desc, string[] opts, string defaultValue = null, string[] displayNames = null)
+            : base(key, name, desc, defaultValue ?? (opts?.FirstOrDefault() ?? ""))
         {
             options = opts ?? new string[] { "Option1" };
             this.displayNames = displayNames;
         }
 
-        public EnumSetting(string name, string desc, string[] opts, int defaultIndex = 0, string[] displayNames = null)
-            : base(name, desc, (opts != null && defaultIndex >= 0 && defaultIndex < opts.Length) ? opts[defaultIndex] : (opts?.FirstOrDefault() ?? ""))
+        public EnumSetting(string key, string name, string desc, string[] opts, int defaultIndex = 0, string[] displayNames = null)
+            : base(key, name, desc, (opts != null && defaultIndex >= 0 && defaultIndex < opts.Length) ? opts[defaultIndex] : (opts?.FirstOrDefault() ?? ""))
         {
             options = opts ?? new string[] { "Option1" };
             this.displayNames = displayNames;
@@ -97,14 +97,14 @@ namespace Void2610.SettingsSystem
         /// <summary>
         /// 指定したenumの値で設定を初期化
         /// </summary>
-        public static EnumSetting CreateFromEnum<T>(string name, string desc, T defaultValue, string[] customDisplayNames = null)
+        public static EnumSetting CreateFromEnum<T>(string key, string name, string desc, T defaultValue, string[] customDisplayNames = null)
             where T : Enum
         {
             var enumValues = Enum.GetValues(typeof(T)).Cast<T>().ToArray();
             var opts = enumValues.Select(e => e.ToString()).ToArray();
             var defaultVal = defaultValue.ToString();
 
-            return new EnumSetting(name, desc, opts, defaultVal, customDisplayNames);
+            return new EnumSetting(key, name, desc, opts, defaultVal, customDisplayNames);
         }
 
         /// <summary>

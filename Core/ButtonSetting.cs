@@ -30,8 +30,8 @@ namespace Void2610.SettingsSystem
 
         private readonly Subject<Unit> _onButtonClicked = new();
 
-        public ButtonSetting(string name, string desc, string btnText, bool needsConfirmation = false, string confirmMsg = "")
-            : base(name, desc, Unit.Default)
+        public ButtonSetting(string key, string name, string desc, string btnText, bool needsConfirmation = false, string confirmMsg = "")
+            : base(key, name, desc, Unit.Default)
         {
             buttonText = btnText;
             requiresConfirmation = needsConfirmation;
@@ -40,7 +40,8 @@ namespace Void2610.SettingsSystem
 
         public ButtonSetting()
         {
-            buttonText = "実行";
+            // シリアライゼーション用のデフォルトコンストラクタ
+            buttonText = "";
         }
 
         public void ExecuteAction()
