@@ -7,10 +7,16 @@ namespace Void2610.SettingsSystem
         public string Name { get; }
         public IReadOnlyList<ISettingBase> Settings { get; }
 
-        public SettingsCategory(string name, IEnumerable<ISettingBase> settings)
+        /// <summary>
+        /// タイトル画面でのみ表示するかどうか
+        /// </summary>
+        public bool TitleOnly { get; }
+
+        public SettingsCategory(string name, IEnumerable<ISettingBase> settings, bool titleOnly = false)
         {
             Name = name;
             Settings = new List<ISettingBase>(settings);
+            TitleOnly = titleOnly;
         }
     }
 }
