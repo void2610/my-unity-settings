@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using R3;
 using UnityEngine;
 using VContainer.Unity;
@@ -53,6 +54,12 @@ namespace Void2610.SettingsSystem
 
             SubscribeInputEvents();
             SubscribeToViewEvents();
+            InitializeAsync().Forget();
+        }
+
+        private async UniTaskVoid InitializeAsync()
+        {
+            await _settingsManager.WaitForInitializationAsync();
             RefreshSettingsView();
         }
 

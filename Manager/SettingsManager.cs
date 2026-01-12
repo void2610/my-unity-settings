@@ -11,6 +11,7 @@ namespace Void2610.SettingsSystem
     public sealed class SettingsManager : IStartable, IDisposable
     {
         public IReadOnlyList<SettingsCategory> Categories => _categories;
+        public bool IsInitialized { get; private set; }
 
         private const string SETTINGS_KEY = "game_settings";
 
@@ -46,6 +47,13 @@ namespace Void2610.SettingsSystem
             // セーブデータから設定を読み込む
             LoadSettings();
             ApplyCurrentValues();
+
+            IsInitialized = true;
+        }
+
+        public async UniTask WaitForInitializationAsync()
+        {
+            await UniTask.WaitUntil(() => IsInitialized);
         }
 
         private void InitializeSettings()
