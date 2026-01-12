@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using R3;
 using UnityEngine;
 using VContainer.Unity;
@@ -21,12 +22,6 @@ namespace Void2610.SettingsSystem
         public SettingsManager(ISettingsDefinition settingsDefinition)
         {
             _settingsDefinition = settingsDefinition;
-
-            // 設定定義から設定項目を作成
-            InitializeSettings();
-
-            // 各設定の値変更イベントを監視
-            SubscribeToSettingChanges();
         }
 
         /// <summary>
@@ -34,6 +29,20 @@ namespace Void2610.SettingsSystem
         /// </summary>
         public void Start()
         {
+            InitializeAsync().Forget();
+        }
+
+        private async UniTaskVoid InitializeAsync()
+        {
+            // 設定定義の初期化待機（ローカライズ等）
+            await _settingsDefinition.WaitForInitializationAsync();
+
+            // 設定定義から設定項目を作成
+            InitializeSettings();
+
+            // 各設定の値変更イベントを監視
+            SubscribeToSettingChanges();
+
             // セーブデータから設定を読み込む
             LoadSettings();
             ApplyCurrentValues();
