@@ -54,12 +54,13 @@ namespace Void2610.SettingsSystem
 
             SubscribeInputEvents();
             SubscribeToViewEvents();
-            InitializeAsync().Forget();
         }
 
-        private async UniTaskVoid InitializeAsync()
+        /// <summary>
+        /// 設定画面を初期化（SettingsManager初期化後に呼び出す）
+        /// </summary>
+        public void Initialize()
         {
-            await _settingsManager.WaitForInitializationAsync();
             RefreshSettingsView();
         }
 
