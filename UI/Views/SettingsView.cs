@@ -434,7 +434,7 @@ namespace Void2610.SettingsSystem
             if (!currentSelected || currentSelected == _lastSelectedObject) return;
 
             _lastSelectedObject = currentSelected;
-            descriptionText.text = _settingDescriptions.GetValueOrDefault(currentSelected, "");
+            if (descriptionText) descriptionText.text = _settingDescriptions.GetValueOrDefault(currentSelected, "");
         }
 
         private void OnDestroy()

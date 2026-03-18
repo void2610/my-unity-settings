@@ -34,6 +34,7 @@ namespace Void2610.SettingsSystem
         private readonly SettingsManager _settingsManager;
         private readonly IConfirmationDialog _confirmationDialog;
         private readonly ISettingsInputProvider _inputProvider;
+        private readonly bool _showDescriptions;
         private readonly CompositeDisposable _disposables = new();
         private readonly Subject<Unit> _onShowRequested = new();
         private readonly Subject<Unit> _onHideRequested = new();
@@ -41,11 +42,13 @@ namespace Void2610.SettingsSystem
         public SettingsPresenter(
             SettingsManager settingsManager,
             IConfirmationDialog confirmationDialog,
-            ISettingsInputProvider inputProvider)
+            ISettingsInputProvider inputProvider,
+            SettingsSystemOptions options = null)
         {
             _settingsManager = settingsManager;
             _confirmationDialog = confirmationDialog;
             _inputProvider = inputProvider;
+            _showDescriptions = options?.ShowDescriptions ?? true;
         }
 
         public void Start()
@@ -144,7 +147,7 @@ namespace Void2610.SettingsSystem
             {
                 name = setting.SettingName,
                 displayName = setting.SettingName,
-                description = setting.Description ?? ""
+                description = _showDescriptions ? (setting.Description ?? "") : ""
             };
 
             switch (setting)
