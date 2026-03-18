@@ -57,18 +57,11 @@ namespace Void2610.SettingsSystem
         }
 
         /// <summary>
-        /// 設定画面を初期化（SettingsManager初期化後に呼び出す）
+        /// 設定画面の表示を要求（SettingsManager の初期化完了を待機してから表示する）
         /// </summary>
-        public void Initialize()
+        public async UniTaskVoid RequestShow()
         {
-            RefreshSettingsView();
-        }
-
-        /// <summary>
-        /// 設定画面の表示を要求
-        /// </summary>
-        public void RequestShow()
-        {
+            await _settingsManager.WaitForInitializationAsync();
             RefreshSettingsView();
             _onShowRequested.OnNext(Unit.Default);
         }
