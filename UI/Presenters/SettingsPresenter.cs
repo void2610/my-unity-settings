@@ -110,6 +110,14 @@ namespace Void2610.SettingsSystem
                 })
                 .AddTo(_disposables);
 
+            // bool変更イベント
+            _settingsView.OnBoolChanged
+                .Subscribe(data => {
+                    var setting = _settingsManager.GetSetting<BoolSetting>(data.settingName);
+                    setting.CurrentValue = data.value;
+                })
+                .AddTo(_disposables);
+
             // ボタンクリックイベント
             _settingsView.OnButtonClicked
                 .Subscribe(settingName => {
@@ -164,6 +172,11 @@ namespace Void2610.SettingsSystem
                     data.stringValue = enumSetting.CurrentValue;
                     data.options = enumSetting.Options;
                     data.displayNames = enumSetting.DisplayNames;
+                    break;
+
+                case BoolSetting boolSetting:
+                    data.type = SettingsView.SettingType.Bool;
+                    data.boolValue = boolSetting.CurrentValue;
                     break;
 
                 case ButtonSetting buttonSetting:

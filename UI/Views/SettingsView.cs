@@ -31,9 +31,11 @@ namespace Void2610.SettingsSystem
         [SerializeField] private GameObject sliderSettingPrefab;
         [SerializeField] private GameObject buttonSettingPrefab;
         [SerializeField] private GameObject enumSettingPrefab;
+        [SerializeField] private GameObject boolSettingPrefab;
 
         public Observable<(string settingName, float value)> OnSliderChanged => _onSliderChanged;
         public Observable<(string settingName, string value)> OnEnumChanged => _onEnumChanged;
+        public Observable<(string settingName, bool value)> OnBoolChanged => _onBoolChanged;
         public Observable<string> OnButtonClicked => _onButtonClicked;
         public Observable<Unit> OnCloseRequested => _onCloseRequested;
 
@@ -54,6 +56,7 @@ namespace Void2610.SettingsSystem
 
         private readonly Subject<(string settingName, float value)> _onSliderChanged = new();
         private readonly Subject<(string settingName, string value)> _onEnumChanged = new();
+        private readonly Subject<(string settingName, bool value)> _onBoolChanged = new();
         private readonly Subject<string> _onButtonClicked = new();
         private readonly Subject<Unit> _onCloseRequested = new();
         private readonly List<GameObject> _settingUIObjects = new();
@@ -88,6 +91,7 @@ namespace Void2610.SettingsSystem
             public string stringValue;
             public float minValue;
             public float maxValue;
+            public bool boolValue;
             public string[] options;
             public string[] displayNames;
             public string buttonText;
@@ -99,6 +103,7 @@ namespace Void2610.SettingsSystem
         {
             Slider,
             Enum,
+            Bool,
             Button
         }
 
@@ -223,8 +228,9 @@ namespace Void2610.SettingsSystem
             var settingItem = settingData.type switch
             {
                 SettingType.Slider => CreateSliderUI(settingData, containerObject.transform),
-                SettingType.Button => CreateButtonUI(settingData, containerObject.transform),
                 SettingType.Enum => CreateEnumUI(settingData, containerObject.transform),
+                SettingType.Bool => CreateBoolUI(settingData, containerObject.transform),
+                SettingType.Button => CreateButtonUI(settingData, containerObject.transform),
                 _ => null
             };
 
@@ -321,6 +327,22 @@ namespace Void2610.SettingsSystem
             settingItem.Initialize(settingData.name, settingData.options, settingData.displayNames, settingData.stringValue);
             settingItem.OnValueChanged
                 .Subscribe(data => _onEnumChanged.OnNext((data.settingName, (string)data.value)))
+                .AddTo(_itemSubscriptions);
+
+            return settingItem;
+        }
+
+        /// <summary>
+        /// bool設定のUIを生成
+        /// </summary>
+        private ISettingItemNavigatable CreateBoolUI(SettingDisplayData settingData, Transform parent)
+        {
+            var uiObject = Instantiate(boolSettingPrefab, parent);
+            var settingItem = uiObject.GetComponent<BoolSettingItem>();
+
+            settingItem.Initialize(settingData.name, settingData.boolValue);
+            settingItem.OnValueChanged
+                .Subscribe(data => _onBoolChanged.OnNext((data.settingName, (bool)data.value)))
                 .AddTo(_itemSubscriptions);
 
             return settingItem;
@@ -444,6 +466,7 @@ namespace Void2610.SettingsSystem
             _tabSubscriptions.Dispose();
             _onSliderChanged?.Dispose();
             _onEnumChanged?.Dispose();
+            _onBoolChanged?.Dispose();
             _onButtonClicked?.Dispose();
             _onCloseRequested?.Dispose();
         }
