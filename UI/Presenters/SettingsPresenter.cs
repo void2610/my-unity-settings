@@ -36,6 +36,7 @@ namespace Void2610.SettingsSystem
         private readonly ISettingsInputProvider _inputProvider;
         private readonly bool _showDescriptions;
         private readonly CompositeDisposable _disposables = new();
+        private CompositeDisposable _viewDisposables = new();
         private readonly Subject<Unit> _onShowRequested = new();
         private readonly Subject<Unit> _onHideRequested = new();
 
@@ -53,9 +54,26 @@ namespace Void2610.SettingsSystem
 
         public void Start()
         {
-            _settingsView = Object.FindFirstObjectByType<SettingsView>();
+            // シーンのSettingsViewを取得して接続
+            ConnectView(Object.FindFirstObjectByType<SettingsView>());
 
-            SubscribeInputEvents();
+            // 入力プロバイダーのナビゲーションイベントを購読（グローバル）
+            _inputProvider.OnNavigateHorizontal
+                .Where(x => Mathf.Abs(x) > 0.1f)
+                .Subscribe(x => _settingsView?.NavigateHorizontal(x))
+                .AddTo(_disposables);
+        }
+
+        /// <summary>
+        /// シーンのSettingsViewを接続する。シーン遷移時に呼び出す。
+        /// </summary>
+        public void ConnectView(SettingsView view)
+        {
+            // 既存のView購読を破棄して再生成
+            _viewDisposables.Dispose();
+            _viewDisposables = new CompositeDisposable();
+            _settingsView = view;
+            if (_settingsView == null) return;
             SubscribeToViewEvents();
         }
 
@@ -78,19 +96,7 @@ namespace Void2610.SettingsSystem
         }
 
         /// <summary>
-        /// 入力イベントの購読
-        /// </summary>
-        private void SubscribeInputEvents()
-        {
-            // 水平ナビゲーションの購読
-            _inputProvider.OnNavigateHorizontal
-                .Where(x => Mathf.Abs(x) > 0.1f)
-                .Subscribe(x => _settingsView.NavigateHorizontal(x))
-                .AddTo(_disposables);
-        }
-
-        /// <summary>
-        /// ViewのイベントをSettingsManagerに接続
+        /// ViewのイベントをSettingsManagerに接続（_viewDisposables に追加）
         /// </summary>
         private void SubscribeToViewEvents()
         {
@@ -100,7 +106,7 @@ namespace Void2610.SettingsSystem
                     var setting = _settingsManager.GetSetting<SliderSetting>(data.settingName);
                     setting.CurrentValue = data.value;
                 })
-                .AddTo(_disposables);
+                .AddTo(_viewDisposables);
 
             // 列挙型変更イベント
             _settingsView.OnEnumChanged
@@ -108,7 +114,7 @@ namespace Void2610.SettingsSystem
                     var setting = _settingsManager.GetSetting<EnumSetting>(data.settingName);
                     setting.CurrentValue = data.value;
                 })
-                .AddTo(_disposables);
+                .AddTo(_viewDisposables);
 
             // bool変更イベント
             _settingsView.OnBoolChanged
@@ -116,7 +122,7 @@ namespace Void2610.SettingsSystem
                     var setting = _settingsManager.GetSetting<BoolSetting>(data.settingName);
                     setting.CurrentValue = data.value;
                 })
-                .AddTo(_disposables);
+                .AddTo(_viewDisposables);
 
             // ボタンクリックイベント
             _settingsView.OnButtonClicked
@@ -124,12 +130,12 @@ namespace Void2610.SettingsSystem
                     var setting = _settingsManager.GetSetting<ButtonSetting>(settingName);
                     setting.ExecuteAction();
                 })
-                .AddTo(_disposables);
+                .AddTo(_viewDisposables);
 
             // 閉じるボタンイベント
             _settingsView.OnCloseRequested
                 .Subscribe(_ => _onHideRequested.OnNext(Unit.Default))
-                .AddTo(_disposables);
+                .AddTo(_viewDisposables);
         }
 
         private void RefreshSettingsView()
@@ -193,6 +199,7 @@ namespace Void2610.SettingsSystem
         public void Dispose()
         {
             _disposables?.Dispose();
+            _viewDisposables?.Dispose();
             _onShowRequested?.Dispose();
             _onHideRequested?.Dispose();
         }
