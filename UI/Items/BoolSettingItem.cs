@@ -18,16 +18,16 @@ namespace Void2610.SettingsSystem
 
         public GameObject SelectableGameObject => _button.gameObject;
         public IEnumerable<GameObject> AllSelectableGameObjects => new[] { _button.gameObject };
-        public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;
+        public Observable<(string settingKey, object value)> OnValueChanged => _onValueChanged;
 
-        private readonly Subject<(string settingName, object value)> _onValueChanged = new();
-        private string _settingName;
+        private readonly Subject<(string settingKey, object value)> _onValueChanged = new();
+        private string _settingKey;
         private bool _currentValue;
         private Button _button;
 
-        public void Initialize(string settingName, bool currentValue)
+        public void Initialize(string settingKey, bool currentValue)
         {
-            _settingName = settingName;
+            _settingKey = settingKey;
             _currentValue = currentValue;
             _button = GetComponent<Button>();
 
@@ -55,7 +55,7 @@ namespace Void2610.SettingsSystem
         {
             _currentValue = !_currentValue;
             RefreshVisual();
-            _onValueChanged.OnNext((_settingName, _currentValue));
+            _onValueChanged.OnNext((_settingKey, _currentValue));
         }
 
         private void RefreshVisual()

@@ -103,7 +103,7 @@ namespace Void2610.SettingsSystem
             // スライダー変更イベント
             _settingsView.OnSliderChanged
                 .Subscribe(data => {
-                    var setting = _settingsManager.GetSetting<SliderSetting>(data.settingName);
+                    var setting = _settingsManager.GetSetting<SliderSetting>(data.settingKey);
                     setting.CurrentValue = data.value;
                 })
                 .AddTo(_viewDisposables);
@@ -111,7 +111,7 @@ namespace Void2610.SettingsSystem
             // 列挙型変更イベント
             _settingsView.OnEnumChanged
                 .Subscribe(data => {
-                    var setting = _settingsManager.GetSetting<EnumSetting>(data.settingName);
+                    var setting = _settingsManager.GetSetting<EnumSetting>(data.settingKey);
                     setting.CurrentValue = data.value;
                 })
                 .AddTo(_viewDisposables);
@@ -119,15 +119,15 @@ namespace Void2610.SettingsSystem
             // bool変更イベント
             _settingsView.OnBoolChanged
                 .Subscribe(data => {
-                    var setting = _settingsManager.GetSetting<BoolSetting>(data.settingName);
+                    var setting = _settingsManager.GetSetting<BoolSetting>(data.settingKey);
                     setting.CurrentValue = data.value;
                 })
                 .AddTo(_viewDisposables);
 
             // ボタンクリックイベント
             _settingsView.OnButtonClicked
-                .Subscribe(settingName => {
-                    var setting = _settingsManager.GetSetting<ButtonSetting>(settingName);
+                .Subscribe(settingKey => {
+                    var setting = _settingsManager.GetSetting<ButtonSetting>(settingKey);
                     setting.ExecuteAction();
                 })
                 .AddTo(_viewDisposables);
@@ -159,7 +159,7 @@ namespace Void2610.SettingsSystem
         {
             var data = new SettingsView.SettingDisplayData
             {
-                name = setting.SettingName,
+                key = setting.SettingKey,
                 displayName = setting.SettingName,
                 description = _showDescriptions ? (setting.Description ?? "") : ""
             };

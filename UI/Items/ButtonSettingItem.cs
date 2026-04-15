@@ -15,29 +15,29 @@ namespace Void2610.SettingsSystem
     {
         public GameObject SelectableGameObject => _button.gameObject;
         public IEnumerable<GameObject> AllSelectableGameObjects => new[] { _button.gameObject };
-        public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;
+        public Observable<(string settingKey, object value)> OnValueChanged => _onValueChanged;
 
-        private readonly Subject<(string settingName, object value)> _onValueChanged = new();
-        private string _settingName;
+        private readonly Subject<(string settingKey, object value)> _onValueChanged = new();
+        private string _settingKey;
         private Button _button;
 
         /// <summary>
         /// 設定項目を初期化
         /// </summary>
-        public void Initialize(string settingName, string buttonText)
+        public void Initialize(string settingKey, string buttonText)
         {
-            _settingName = settingName;
+            _settingKey = settingKey;
             _button = GetComponent<Button>();
             _button.GetComponentInChildren<TextMeshProUGUI>().text = buttonText;
 
             // ボタンのイベント設定
             _button.OnClickAsObservable()
-                .Subscribe(_ => _onValueChanged.OnNext((_settingName, Unit.Default)))
+                .Subscribe(_ => _onValueChanged.OnNext((_settingKey, Unit.Default)))
                 .AddTo(this);
         }
 
         public void OnNavigateHorizontal(float direction) { }
-        public void OnSubmit() => _onValueChanged.OnNext((_settingName, Unit.Default));
+        public void OnSubmit() => _onValueChanged.OnNext((_settingKey, Unit.Default));
 
         private void OnDestroy()
         {

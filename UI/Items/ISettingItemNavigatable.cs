@@ -21,6 +21,6 @@ namespace Void2610.SettingsSystem
 
         void OnNavigateHorizontal(float direction);
         void OnSubmit();
-        Observable<(string settingName, object value)> OnValueChanged { get; }
+        Observable<(string settingKey, object value)> OnValueChanged { get; }
     }
 }

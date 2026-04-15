@@ -14,6 +14,6 @@ namespace Void2610.SettingsSystem
         /// <param name="confirmText">確認ボタンのテキスト</param>
         /// <param name="cancelText">キャンセルボタンのテキスト</param>
         /// <returns>ユーザーが確認した場合はtrue、キャンセルした場合はfalse</returns>
-        UniTask<bool> ShowDialog(string message, string confirmText = "OK", string cancelText = "キャンセル");
+        UniTask<bool> ShowDialog(string message, string confirmText = null, string cancelText = null);
     }
 }

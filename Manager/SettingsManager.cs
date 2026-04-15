@@ -71,7 +71,7 @@ namespace Void2610.SettingsSystem
                     setting.OnSettingChanged
                         .Subscribe(_ =>
                         {
-                            _onSettingChanged.OnNext(setting.SettingName);
+                            _onSettingChanged.OnNext(setting.SettingKey);
                             SaveSettings();
                         })
                         .AddTo(_disposables);
@@ -79,11 +79,11 @@ namespace Void2610.SettingsSystem
             }
         }
 
-        public T GetSetting<T>(string settingName) where T : class, ISettingBase
+        public T GetSetting<T>(string settingKey) where T : class, ISettingBase
         {
             return _categories
                 .SelectMany(c => c.Settings)
-                .FirstOrDefault(s => s.SettingName == settingName) as T;
+                .FirstOrDefault(s => s.SettingKey == settingKey) as T;
         }
 
         public void ResetAllSettings()
@@ -105,7 +105,7 @@ namespace Void2610.SettingsSystem
             {
                 foreach (var setting in category.Settings)
                 {
-                    settingsData.SetValue(setting.SettingName, setting.SerializeValue());
+                    settingsData.SetValue(setting.SettingKey, setting.SerializeValue());
                 }
             }
 
@@ -124,7 +124,7 @@ namespace Void2610.SettingsSystem
             {
                 foreach (var setting in category.Settings)
                 {
-                    if (settingsData.TryGetValue(setting.SettingName, out var value))
+                    if (settingsData.TryGetValue(setting.SettingKey, out var value))
                     {
                         setting.DeserializeValue(value);
                     }

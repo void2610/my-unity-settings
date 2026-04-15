@@ -14,22 +14,22 @@ namespace Void2610.SettingsSystem
     {
         public GameObject SelectableGameObject => _slider.gameObject;
         public IEnumerable<GameObject> AllSelectableGameObjects => new[] { _slider.gameObject };
-        public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;
+        public Observable<(string settingKey, object value)> OnValueChanged => _onValueChanged;
 
         private const float NAVIGATION_STEP = 0.05f;
 
-        private readonly Subject<(string settingName, object value)> _onValueChanged = new();
+        private readonly Subject<(string settingKey, object value)> _onValueChanged = new();
         private Slider _slider;
-        private string _settingName;
+        private string _settingKey;
         private float _minValue;
         private float _maxValue;
 
         /// <summary>
         /// 設定項目を初期化
         /// </summary>
-        public void Initialize(string settingName, float minValue, float maxValue, float currentValue)
+        public void Initialize(string settingKey, float minValue, float maxValue, float currentValue)
         {
-            _settingName = settingName;
+            _settingKey = settingKey;
             _minValue = minValue;
             _maxValue = maxValue;
 
@@ -42,7 +42,7 @@ namespace Void2610.SettingsSystem
 
             // スライダー変更イベントのリスニング
             _slider.OnValueChangedAsObservable()
-                .Subscribe(v => _onValueChanged.OnNext((_settingName, v)))
+                .Subscribe(v => _onValueChanged.OnNext((_settingKey, v)))
                 .AddTo(this);
         }
 

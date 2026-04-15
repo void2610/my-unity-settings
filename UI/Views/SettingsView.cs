@@ -33,9 +33,9 @@ namespace Void2610.SettingsSystem
         [SerializeField] private GameObject enumSettingPrefab;
         [SerializeField] private GameObject boolSettingPrefab;
 
-        public Observable<(string settingName, float value)> OnSliderChanged => _onSliderChanged;
-        public Observable<(string settingName, string value)> OnEnumChanged => _onEnumChanged;
-        public Observable<(string settingName, bool value)> OnBoolChanged => _onBoolChanged;
+        public Observable<(string settingKey, float value)> OnSliderChanged => _onSliderChanged;
+        public Observable<(string settingKey, string value)> OnEnumChanged => _onEnumChanged;
+        public Observable<(string settingKey, bool value)> OnBoolChanged => _onBoolChanged;
         public Observable<string> OnButtonClicked => _onButtonClicked;
         public Observable<Unit> OnCloseRequested => _onCloseRequested;
 
@@ -54,9 +54,9 @@ namespace Void2610.SettingsSystem
             }
         }
 
-        private readonly Subject<(string settingName, float value)> _onSliderChanged = new();
-        private readonly Subject<(string settingName, string value)> _onEnumChanged = new();
-        private readonly Subject<(string settingName, bool value)> _onBoolChanged = new();
+        private readonly Subject<(string settingKey, float value)> _onSliderChanged = new();
+        private readonly Subject<(string settingKey, string value)> _onEnumChanged = new();
+        private readonly Subject<(string settingKey, bool value)> _onBoolChanged = new();
         private readonly Subject<string> _onButtonClicked = new();
         private readonly Subject<Unit> _onCloseRequested = new();
         private readonly List<GameObject> _settingUIObjects = new();
@@ -83,7 +83,7 @@ namespace Void2610.SettingsSystem
         [Serializable]
         public struct SettingDisplayData
         {
-            public string name;
+            public string key;
             public string displayName;
             public string description;
             public SettingType type;
@@ -255,11 +255,9 @@ namespace Void2610.SettingsSystem
         private async UniTaskVoid ShowConfirmationDialog(SettingDisplayData settingData)
         {
             var result = await _confirmationDialog.ShowDialog(
-                settingData.confirmationMessage,
-                "実行"
-            );
+                settingData.confirmationMessage);
 
-            if (result) _onButtonClicked.OnNext(settingData.name);
+            if (result) _onButtonClicked.OnNext(settingData.key);
         }
 
         /// <summary>
@@ -287,9 +285,9 @@ namespace Void2610.SettingsSystem
             var uiObject = Instantiate(sliderSettingPrefab, parent);
             var settingItem = uiObject.GetComponent<SliderSettingItem>();
 
-            settingItem.Initialize(settingData.name, settingData.minValue, settingData.maxValue, settingData.floatValue);
+            settingItem.Initialize(settingData.key, settingData.minValue, settingData.maxValue, settingData.floatValue);
             settingItem.OnValueChanged
-                .Subscribe(data => _onSliderChanged.OnNext((data.settingName, (float)data.value)))
+                .Subscribe(data => _onSliderChanged.OnNext((data.settingKey, (float)data.value)))
                 .AddTo(_itemSubscriptions);
 
             return settingItem;
@@ -303,13 +301,13 @@ namespace Void2610.SettingsSystem
             var uiObject = Instantiate(buttonSettingPrefab, parent);
             var settingItem = uiObject.GetComponent<ButtonSettingItem>();
 
-            settingItem.Initialize(settingData.name, settingData.buttonText);
+            settingItem.Initialize(settingData.key, settingData.buttonText);
             settingItem.OnValueChanged
                 .Subscribe(data => {
                     if (settingData.requiresConfirmation)
                         ShowConfirmationDialog(settingData).Forget();
                     else
-                        _onButtonClicked.OnNext(data.settingName);
+                        _onButtonClicked.OnNext(data.settingKey);
                 })
                 .AddTo(_itemSubscriptions);
 
@@ -324,9 +322,9 @@ namespace Void2610.SettingsSystem
             var uiObject = Instantiate(enumSettingPrefab, parent);
             var settingItem = uiObject.GetComponent<EnumSettingItem>();
 
-            settingItem.Initialize(settingData.name, settingData.options, settingData.displayNames, settingData.stringValue);
+            settingItem.Initialize(settingData.key, settingData.options, settingData.displayNames, settingData.stringValue);
             settingItem.OnValueChanged
-                .Subscribe(data => _onEnumChanged.OnNext((data.settingName, (string)data.value)))
+                .Subscribe(data => _onEnumChanged.OnNext((data.settingKey, (string)data.value)))
                 .AddTo(_itemSubscriptions);
 
             return settingItem;
@@ -340,9 +338,9 @@ namespace Void2610.SettingsSystem
             var uiObject = Instantiate(boolSettingPrefab, parent);
             var settingItem = uiObject.GetComponent<BoolSettingItem>();
 
-            settingItem.Initialize(settingData.name, settingData.boolValue);
+            settingItem.Initialize(settingData.key, settingData.boolValue);
             settingItem.OnValueChanged
-                .Subscribe(data => _onBoolChanged.OnNext((data.settingName, (bool)data.value)))
+                .Subscribe(data => _onBoolChanged.OnNext((data.settingKey, (bool)data.value)))
                 .AddTo(_itemSubscriptions);
 
             return settingItem;

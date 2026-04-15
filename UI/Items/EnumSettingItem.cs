@@ -19,10 +19,10 @@ namespace Void2610.SettingsSystem
 
         public GameObject SelectableGameObject => prevButton.gameObject;
         public IEnumerable<GameObject> AllSelectableGameObjects => new[] { prevButton.gameObject, this.gameObject, nextButton.gameObject };
-        public Observable<(string settingName, object value)> OnValueChanged => _onValueChanged;
+        public Observable<(string settingKey, object value)> OnValueChanged => _onValueChanged;
 
-        private readonly Subject<(string settingName, object value)> _onValueChanged = new();
-        private string _settingName;
+        private readonly Subject<(string settingKey, object value)> _onValueChanged = new();
+        private string _settingKey;
         private string[] _options;
         private string[] _displayNames;
         private int _currentIndex;
@@ -30,9 +30,9 @@ namespace Void2610.SettingsSystem
         /// <summary>
         /// 設定項目を初期化
         /// </summary>
-        public void Initialize(string settingName, string[] options, string[] displayNames, string currentValue)
+        public void Initialize(string settingKey, string[] options, string[] displayNames, string currentValue)
         {
-            _settingName = settingName;
+            _settingKey = settingKey;
             _options = options ?? Array.Empty<string>();
             _displayNames = displayNames ?? options ?? Array.Empty<string>();
 
@@ -113,7 +113,7 @@ namespace Void2610.SettingsSystem
             if (_currentIndex >= 0 && _currentIndex < _options.Length)
             {
                 var newValue = _options[_currentIndex];
-                _onValueChanged.OnNext((_settingName, newValue));
+                _onValueChanged.OnNext((_settingKey, newValue));
             }
         }
 
