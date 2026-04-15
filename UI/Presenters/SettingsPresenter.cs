@@ -75,6 +75,7 @@ namespace Void2610.SettingsSystem
             _settingsView = view;
             if (_settingsView == null) return;
             SubscribeToViewEvents();
+            RefreshSettingsView();
         }
 
         /// <summary>
