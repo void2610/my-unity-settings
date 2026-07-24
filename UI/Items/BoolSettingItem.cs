@@ -15,6 +15,8 @@ namespace Void2610.SettingsSystem
         [SerializeField] private Sprite onSprite;
         [SerializeField] private Sprite offSprite;
         [SerializeField] private bool useNativeSize;
+        [SerializeField] private Color onColor = Color.white;
+        [SerializeField] private Color offColor = new(0.5f, 0.5f, 0.5f, 1f);
 
         public GameObject SelectableGameObject => _button.gameObject;
         public IEnumerable<GameObject> AllSelectableGameObjects => new[] { _button.gameObject };
@@ -63,6 +65,7 @@ namespace Void2610.SettingsSystem
             if (!targetImage) return;
 
             targetImage.sprite = _currentValue ? onSprite : offSprite;
+            targetImage.color = _currentValue ? onColor : offColor;
             if (useNativeSize && targetImage.sprite)
             {
                 targetImage.SetNativeSize();
