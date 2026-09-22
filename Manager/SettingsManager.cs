@@ -190,15 +190,14 @@ namespace Void2610.SettingsSystem
     {
         public List<SettingEntry> entries = new();
 
-        public string GetValue(string key)
-        {
-            var entry = entries.Find(e => e.key == key);
-            return entry?.value;
-        }
+        public string GetValue(string key) => Find(key)?.value;
 
         public void SetValue(string key, string value)
         {
-            var entry = entries.Find(e => e.key == key);
+            // 壊れた JSON から復元すると entries が null になりうる
+            entries ??= new List<SettingEntry>();
+
+            var entry = Find(key);
             if (entry != null)
             {
                 entry.value = value;
@@ -211,7 +210,7 @@ namespace Void2610.SettingsSystem
 
         public bool TryGetValue(string key, out string value)
         {
-            var entry = entries.Find(e => e.key == key);
+            var entry = Find(key);
             if (entry != null)
             {
                 value = entry.value;
@@ -220,6 +219,8 @@ namespace Void2610.SettingsSystem
             value = null;
             return false;
         }
+
+        private SettingEntry Find(string key) => entries?.Find(e => e != null && e.key == key);
     }
 
     /// <summary>
