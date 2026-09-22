@@ -56,6 +56,36 @@ namespace Void2610.SettingsSystem
             await UniTask.WaitUntil(() => IsInitialized);
         }
 
+        /// <summary>
+        /// 保存済みの設定値を SettingsManager の初期化を待たずに読む。
+        /// 起動時ロケール選択のように、設定項目が生成される前に保存値が要る箇所から使う
+        /// </summary>
+        /// <returns>保存されていない / 壊れている場合は false</returns>
+        public static bool TryLoadSavedValue<T>(string settingKey, out T value)
+        {
+            value = default;
+            var json = DataPersistence.LoadData(SETTINGS_KEY);
+            if (string.IsNullOrEmpty(json)) return false;
+
+            try
+            {
+                var settingsData = JsonUtility.FromJson<SettingsData>(json);
+                if (settingsData == null || !settingsData.TryGetValue(settingKey, out var serialized)) return false;
+                if (string.IsNullOrEmpty(serialized)) return false;
+
+                var data = JsonUtility.FromJson<SerializableValue<T>>(serialized);
+                if (data == null) return false;
+
+                value = data.value;
+                return true;
+            }
+            catch (ArgumentException e)
+            {
+                Debug.LogError($"保存済み設定の解析に失敗しました ({settingKey}): {e.Message}");
+                return false;
+            }
+        }
+
         private void InitializeSettings()
         {
             _categories = _settingsDefinition.CreateCategories().ToArray();
@@ -160,15 +190,14 @@ namespace Void2610.SettingsSystem
     {
         public List<SettingEntry> entries = new();
 
-        public string GetValue(string key)
-        {
-            var entry = entries.Find(e => e.key == key);
-            return entry?.value;
-        }
+        public string GetValue(string key) => Find(key)?.value;
 
         public void SetValue(string key, string value)
         {
-            var entry = entries.Find(e => e.key == key);
+            // 壊れた JSON から復元すると entries が null になりうる
+            entries ??= new List<SettingEntry>();
+
+            var entry = Find(key);
             if (entry != null)
             {
                 entry.value = value;
@@ -181,7 +210,7 @@ namespace Void2610.SettingsSystem
 
         public bool TryGetValue(string key, out string value)
         {
-            var entry = entries.Find(e => e.key == key);
+            var entry = Find(key);
             if (entry != null)
             {
                 value = entry.value;
@@ -190,6 +219,8 @@ namespace Void2610.SettingsSystem
             value = null;
             return false;
         }
+
+        private SettingEntry Find(string key) => entries?.Find(e => e != null && e.key == key);
     }
 
     /// <summary>

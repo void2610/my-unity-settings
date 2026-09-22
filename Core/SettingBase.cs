@@ -107,12 +107,15 @@ namespace Void2610.SettingsSystem
             _onValueChanged.OnNext(currentValue);
             _onSettingChanged.OnNext(Unit.Default);
         }
+    }
 
-        [Serializable]
-        private class SerializableValue<TValue>
-        {
-            public TValue value;
-        }
+    /// <summary>
+    /// 設定値 1 件分の JSON 表現。SettingsManager が保存済み値を設定項目の生成前に読むため、型の外に置く
+    /// </summary>
+    [Serializable]
+    internal sealed class SerializableValue<TValue>
+    {
+        public TValue value;
     }
 
     /// <summary>
