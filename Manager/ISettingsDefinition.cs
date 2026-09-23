@@ -13,5 +13,10 @@ namespace Void2610.SettingsSystem
 
         IEnumerable<SettingsCategory> CreateCategories();
         void BindSettingActions(IReadOnlyList<SettingsCategory> categories, CompositeDisposable disposables);
+
+        /// <summary>
+        /// 表示名などが古くなり CreateCategories からやり直すべきときに発行する（ロケール変更等）
+        /// </summary>
+        Observable<Unit> OnCategoriesInvalidated => Observable.Empty<Unit>();
     }
 }

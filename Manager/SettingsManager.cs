@@ -18,6 +18,7 @@ namespace Void2610.SettingsSystem
         private SettingsCategory[] _categories;
         private readonly Subject<string> _onSettingChanged = new();
         private readonly CompositeDisposable _disposables = new();
+        private CompositeDisposable _categoryDisposables = new();
         private readonly ISettingsDefinition _settingsDefinition;
 
         public SettingsManager(ISettingsDefinition settingsDefinition)
@@ -48,7 +49,38 @@ namespace Void2610.SettingsSystem
             LoadSettings();
             ApplyCurrentValues();
 
+            _settingsDefinition.OnCategoriesInvalidated
+                .Subscribe(_ => RebuildCategories())
+                .AddTo(_disposables);
+
             IsInitialized = true;
+        }
+
+        /// <summary>
+        /// 設定定義から設定項目を作り直す。現在の値は引き継ぐ
+        /// </summary>
+        public void RebuildCategories()
+        {
+            var currentValues = _categories
+                .SelectMany(c => c.Settings)
+                .ToDictionary(s => s.SettingKey, s => s.SerializeValue());
+
+            _categoryDisposables.Dispose();
+            _categoryDisposables = new CompositeDisposable();
+
+            // 購読前に値を戻し、引き継ぎを変更イベントとして扱わせない
+            _categories = _settingsDefinition.CreateCategories().ToArray();
+            foreach (var setting in _categories.SelectMany(c => c.Settings))
+            {
+                if (currentValues.TryGetValue(setting.SettingKey, out var value))
+                {
+                    setting.DeserializeValue(value);
+                }
+            }
+
+            _settingsDefinition.BindSettingActions(_categories, _categoryDisposables);
+            SubscribeToSettingChanges();
+            ApplyCurrentValues();
         }
 
         public async UniTask WaitForInitializationAsync()
@@ -89,7 +121,7 @@ namespace Void2610.SettingsSystem
         private void InitializeSettings()
         {
             _categories = _settingsDefinition.CreateCategories().ToArray();
-            _settingsDefinition.BindSettingActions(_categories, _disposables);
+            _settingsDefinition.BindSettingActions(_categories, _categoryDisposables);
         }
 
         private void SubscribeToSettingChanges()
@@ -104,7 +136,7 @@ namespace Void2610.SettingsSystem
                             _onSettingChanged.OnNext(setting.SettingKey);
                             SaveSettings();
                         })
-                        .AddTo(_disposables);
+                        .AddTo(_categoryDisposables);
                 }
             }
         }
@@ -178,6 +210,7 @@ namespace Void2610.SettingsSystem
         /// </summary>
         public void Dispose()
         {
+            _categoryDisposables?.Dispose();
             _disposables?.Dispose();
         }
     }
