@@ -62,6 +62,12 @@ namespace Void2610.SettingsSystem
                 .Where(x => Mathf.Abs(x) > 0.1f)
                 .Subscribe(x => _settingsView?.NavigateHorizontal(x))
                 .AddTo(_disposables);
+
+            // 表示中に作り直されても古い表示名が残らないよう、接続中のViewを描き直す
+            _settingsManager.OnCategoriesRebuilt
+                .Where(_ => _settingsView != null)
+                .Subscribe(_ => RefreshSettingsView())
+                .AddTo(_disposables);
         }
 
         /// <summary>

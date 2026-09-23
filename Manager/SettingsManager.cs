@@ -13,10 +13,16 @@ namespace Void2610.SettingsSystem
         public IReadOnlyList<SettingsCategory> Categories => _categories;
         public bool IsInitialized { get; private set; }
 
+        /// <summary>
+        /// RebuildCategories で設定項目を作り直した後に発行する
+        /// </summary>
+        public Observable<Unit> OnCategoriesRebuilt => _onCategoriesRebuilt;
+
         private const string SETTINGS_KEY = "game_settings";
 
         private SettingsCategory[] _categories;
         private readonly Subject<string> _onSettingChanged = new();
+        private readonly Subject<Unit> _onCategoriesRebuilt = new();
         private readonly CompositeDisposable _disposables = new();
         private CompositeDisposable _categoryDisposables = new();
         private readonly ISettingsDefinition _settingsDefinition;
@@ -81,6 +87,8 @@ namespace Void2610.SettingsSystem
             _settingsDefinition.BindSettingActions(_categories, _categoryDisposables);
             SubscribeToSettingChanges();
             ApplyCurrentValues();
+
+            _onCategoriesRebuilt.OnNext(Unit.Default);
         }
 
         public async UniTask WaitForInitializationAsync()
@@ -212,6 +220,7 @@ namespace Void2610.SettingsSystem
         {
             _categoryDisposables?.Dispose();
             _disposables?.Dispose();
+            _onCategoriesRebuilt.Dispose();
         }
     }
 
