@@ -10,6 +10,12 @@ namespace Void2610.SettingsSystem
     public static class DataPersistence
     {
         /// <summary>
+        /// 非 WebGL 環境の保存先ディレクトリを差し替える。null なら Application.persistentDataPath
+        /// テストが本番のセーブデータを読み書きしないよう、一時ディレクトリへ逃がすために使う
+        /// </summary>
+        public static string RootDirectoryOverride { get; set; }
+
+        /// <summary>
         /// データを保存
         /// </summary>
         /// <param name="key">データのキー（ファイル名またはPlayerPrefsキー）</param>
@@ -120,7 +126,7 @@ namespace Void2610.SettingsSystem
             {
                 key += ".json";
             }
-            return Path.Combine(Application.persistentDataPath, key);
+            return Path.Combine(RootDirectoryOverride ?? Application.persistentDataPath, key);
         }
     }
 }
