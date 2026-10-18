@@ -104,13 +104,16 @@ public class RootLifetimeScope : LifetimeScope
 ```csharp
 public class ConfirmationDialogService : IConfirmationDialog
 {
-    public async UniTask<bool> ShowDialog(string message, string confirmText)
+    public async UniTask<bool> ShowDialog(string message, string confirmText = null, string cancelText = null, bool destructive = false)
     {
         // ダイアログ表示ロジック
-        return await ShowConfirmationUI(message, confirmText);
+        return await ShowConfirmationUI(message, confirmText, cancelText, destructive);
     }
 }
 ```
+
+`destructive` は確定でデータが失われる確認 (`ButtonSetting` の `isDestructive` を立てたボタン等) で true になる。
+誤って押しても安全なキャンセルを押されやすい位置に置く等、通常の確認と区別して出す。
 
 ## フォルダ構成
 

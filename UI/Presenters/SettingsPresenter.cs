@@ -197,6 +197,7 @@ namespace Void2610.SettingsSystem
                     data.buttonText = buttonSetting.ButtonText;
                     data.requiresConfirmation = buttonSetting.RequiresConfirmation;
                     data.confirmationMessage = buttonSetting.ConfirmationMessage;
+                    data.isDestructive = buttonSetting.IsDestructive;
                     break;
             }
 

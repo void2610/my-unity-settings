@@ -97,6 +97,7 @@ namespace Void2610.SettingsSystem
             public string buttonText;
             public bool requiresConfirmation;
             public string confirmationMessage;
+            public bool isDestructive;
         }
 
         public enum SettingType
@@ -255,7 +256,7 @@ namespace Void2610.SettingsSystem
         private async UniTaskVoid ShowConfirmationDialog(SettingDisplayData settingData)
         {
             var result = await _confirmationDialog.ShowDialog(
-                settingData.confirmationMessage);
+                settingData.confirmationMessage, destructive: settingData.isDestructive);
 
             if (result) _onButtonClicked.OnNext(settingData.key);
         }
