@@ -151,7 +151,8 @@ namespace Void2610.SettingsSystem
         public void NavigateHorizontal(float direction)
         {
             var currentSelected = EventSystem.current.currentSelectedGameObject;
-            var settingItem = currentSelected?.GetComponent<ISettingItemNavigatable>();
+            // 列挙型の項目は子の Prev / Next ボタンが選ばれるため、親の項目までたどる
+            var settingItem = currentSelected?.GetComponentInParent<ISettingItemNavigatable>();
             settingItem?.OnNavigateHorizontal(direction);
         }
 
