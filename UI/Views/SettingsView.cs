@@ -414,6 +414,24 @@ namespace Void2610.SettingsSystem
             closeNav.mode = UINavigation.Mode.Explicit;
             closeNav.selectOnUp = visibleSelectables[^1];
             closeButton.navigation = closeNav;
+
+            foreach (var item in categoryItems) LinkSecondarySelectables(item);
+        }
+
+        // 列挙の「次」ボタンのような代表以外の要素も、Automatic のままだとクリックやホバーで選ばれた後に設定画面の外の UI へ移るので、代表と同じ上下につなぐ
+        private static void LinkSecondarySelectables(ISettingItemNavigatable item)
+        {
+            if (!item.SelectableGameObject || !item.SelectableGameObject.TryGetComponent<Selectable>(out var representative)) return;
+            foreach (var go in item.AllSelectableGameObjects)
+            {
+                if (go == item.SelectableGameObject || !go.TryGetComponent<Selectable>(out var secondary)) continue;
+                secondary.navigation = new UINavigation
+                {
+                    mode = UINavigation.Mode.Explicit,
+                    selectOnUp = representative.navigation.selectOnUp,
+                    selectOnDown = representative.navigation.selectOnDown,
+                };
+            }
         }
 
         /// <summary>
