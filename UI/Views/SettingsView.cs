@@ -39,6 +39,9 @@ namespace Void2610.SettingsSystem
         public Observable<string> OnButtonClicked => _onButtonClicked;
         public Observable<Unit> OnCloseRequested => _onCloseRequested;
 
+        /// <summary>タブと項目の Explicit のナビゲーションを組み直したとき (カテゴリの設定・切り替え)</summary>
+        public Observable<Unit> OnNavigationChanged => _onNavigationChanged;
+
         /// <summary>
         /// 現在のカテゴリの最初の設定項目のGameObject（ナビゲーション用）
         /// </summary>
@@ -59,6 +62,7 @@ namespace Void2610.SettingsSystem
         private readonly Subject<(string settingKey, bool value)> _onBoolChanged = new();
         private readonly Subject<string> _onButtonClicked = new();
         private readonly Subject<Unit> _onCloseRequested = new();
+        private readonly Subject<Unit> _onNavigationChanged = new();
         private readonly List<GameObject> _settingUIObjects = new();
         private readonly List<ISettingItemNavigatable> _settingItems = new();
         private readonly List<Button> _tabButtons = new();
@@ -416,6 +420,7 @@ namespace Void2610.SettingsSystem
             closeButton.navigation = closeNav;
 
             foreach (var item in categoryItems) LinkSecondarySelectables(item);
+            _onNavigationChanged.OnNext(Unit.Default);
         }
 
         // 列挙の「次」ボタンのような代表以外の要素も、Automatic のままだとクリックやホバーで選ばれた後に設定画面の外の UI へ移るので、代表と同じ上下につなぐ
@@ -487,6 +492,7 @@ namespace Void2610.SettingsSystem
             _onBoolChanged?.Dispose();
             _onButtonClicked?.Dispose();
             _onCloseRequested?.Dispose();
+            _onNavigationChanged?.Dispose();
         }
     }
 }
