@@ -69,6 +69,7 @@ namespace Void2610.SettingsSystem
         private readonly Dictionary<string, List<GameObject>> _categoryContainers = new();
         private readonly Dictionary<string, List<ISettingItemNavigatable>> _categorySettingItems = new();
         private readonly Dictionary<GameObject, string> _settingDescriptions = new();
+        private readonly Dictionary<GameObject, SettingRowView> _settingRows = new();
         private readonly CompositeDisposable _disposables = new();
         private readonly CompositeDisposable _itemSubscriptions = new();
         private readonly CompositeDisposable _tabSubscriptions = new();
@@ -76,6 +77,7 @@ namespace Void2610.SettingsSystem
         private string _currentCategory;
         private string[] _categories;
         private GameObject _lastSelectedObject;
+        private SettingRowView _focusedRow;
 
         [Serializable]
         public struct CategoryDisplayData
@@ -211,6 +213,11 @@ namespace Void2610.SettingsSystem
             for (var i = 0; i < _tabButtons.Count && i < _categories.Length; i++)
             {
                 var isSelected = _categories[i] == _currentCategory;
+                if (_tabButtons[i].TryGetComponent<SettingsTabView>(out var tabView))
+                {
+                    tabView.SetCurrent(isSelected);
+                    continue;
+                }
                 var colors = _tabButtons[i].colors;
                 colors.normalColor = isSelected ? new Color(0.8f, 0.8f, 0.8f, 1f) : Color.white;
                 _tabButtons[i].colors = colors;
@@ -228,7 +235,8 @@ namespace Void2610.SettingsSystem
             // 設定項目のコンテナを作成（横並び用）
             var containerObject = Instantiate(settingsContentContainerPrefab, settingsContainer);
             // タイトルテキストを作成（左側）
-            CreateTitleText(containerObject.transform, settingData.displayName);
+            var title = CreateTitleText(containerObject.transform, settingData.displayName);
+            if (containerObject.TryGetComponent<SettingRowView>(out var row)) row.SetLabel(title);
 
             // 設定固有のUIを作成（右側）
             var settingItem = settingData.type switch
@@ -248,7 +256,11 @@ namespace Void2610.SettingsSystem
                 // 説明文を全てのSelectableGameObjectに紐付け
                 var description = settingData.description ?? "";
                 foreach (var selectableGo in settingItem.AllSelectableGameObjects)
-                    if (selectableGo) _settingDescriptions[selectableGo] = description;
+                {
+                    if (!selectableGo) continue;
+                    _settingDescriptions[selectableGo] = description;
+                    if (row) _settingRows[selectableGo] = row;
+                }
             }
 
             _settingUIObjects.Add(containerObject);
@@ -269,7 +281,7 @@ namespace Void2610.SettingsSystem
         /// <summary>
         /// タイトルテキストを作成
         /// </summary>
-        private void CreateTitleText(Transform parent, string titleText)
+        private TextMeshProUGUI CreateTitleText(Transform parent, string titleText)
         {
             var titleObject = Instantiate(titleTextPrefab, parent);
 
@@ -281,6 +293,7 @@ namespace Void2610.SettingsSystem
                 layoutElement = titleObject.AddComponent<LayoutElement>();
             layoutElement.preferredWidth = 150f; // タイトルの固定幅
             layoutElement.flexibleWidth = 0f;    // 伸縮しない
+            return textComponent;
         }
 
         /// <summary>
@@ -459,6 +472,8 @@ namespace Void2610.SettingsSystem
             _categoryContainers.Clear();
             _categorySettingItems.Clear();
             _settingDescriptions.Clear();
+            _settingRows.Clear();
+            _focusedRow = null;
 
             // UI要素をDestroy
             foreach (var uiObject in _settingUIObjects.Where(uiObject => uiObject))
@@ -480,6 +495,16 @@ namespace Void2610.SettingsSystem
 
             _lastSelectedObject = currentSelected;
             if (descriptionText) descriptionText.text = _settingDescriptions.GetValueOrDefault(currentSelected, "");
+            FocusRow(_settingRows.GetValueOrDefault(currentSelected));
+        }
+
+        // タブや閉じるボタン、設定画面の外へ選択が移ったときは、どの行も強調しない
+        private void FocusRow(SettingRowView row)
+        {
+            if (_focusedRow == row) return;
+            if (_focusedRow) _focusedRow.SetFocused(false);
+            _focusedRow = row;
+            if (row) row.SetFocused(true);
         }
 
         private void OnDestroy()

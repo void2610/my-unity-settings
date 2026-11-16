@@ -115,6 +115,13 @@ public class ConfirmationDialogService : IConfirmationDialog
 `destructive` は確定でデータが失われる確認 (`ButtonSetting` の `isDestructive` を立てたボタン等) で true になる。
 誤って押しても安全なキャンセルを押されやすい位置に置く等、通常の確認と区別して出す。
 
+### 4. フォーカスと今のカテゴリの見せ方
+
+パッドやキーボードで動かしたとき、どこを選んでいるかが分かるように、次の 2 つを Prefab に付ける。どちらも付けなければ強調しない (タブはボタンの通常色で今のカテゴリを示す)。
+
+- **`SettingRowView`** (`settingsContentContainerPrefab` に付ける): 行の中のどの要素 (スライダー・列挙の前後ボタン等) が選ばれても、行全体をフォーカス中として示す。`focusIndicator` の CanvasGroup (下地の帯や印) を出し、項目名を `focusedLabelColor` にする。タブや閉じるボタンへ選択が移ると、どの行も強調しない
+- **`SettingsTabView`** (`tabButtonPrefab` に付ける): 今表示しているカテゴリのタブで `currentIndicator` (下線等) を出し、`label` を `currentLabelColor` にする。フォーカスの印 (拡大等) とは別に、フォーカスが他にあっても常に出す
+
 ## フォルダ構成
 
 ```
