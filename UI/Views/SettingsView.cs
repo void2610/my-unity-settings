@@ -23,6 +23,7 @@ namespace Void2610.SettingsSystem
         [SerializeField] private Transform settingsContainer;
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private Button closeButton;
+        [SerializeField] private SettingsFocusViewBase focusView;
 
         [Header("プレハブ")]
         [SerializeField] private GameObject tabButtonPrefab;
@@ -66,10 +67,11 @@ namespace Void2610.SettingsSystem
         private readonly List<GameObject> _settingUIObjects = new();
         private readonly List<ISettingItemNavigatable> _settingItems = new();
         private readonly List<Button> _tabButtons = new();
+        private readonly List<SettingsUiElement> _tabElements = new();
         private readonly Dictionary<string, List<GameObject>> _categoryContainers = new();
         private readonly Dictionary<string, List<ISettingItemNavigatable>> _categorySettingItems = new();
         private readonly Dictionary<GameObject, string> _settingDescriptions = new();
-        private readonly Dictionary<GameObject, SettingRowView> _settingRows = new();
+        private readonly Dictionary<GameObject, SettingsUiElement> _settingRows = new();
         private readonly CompositeDisposable _disposables = new();
         private readonly CompositeDisposable _itemSubscriptions = new();
         private readonly CompositeDisposable _tabSubscriptions = new();
@@ -77,7 +79,7 @@ namespace Void2610.SettingsSystem
         private string _currentCategory;
         private string[] _categories;
         private GameObject _lastSelectedObject;
-        private SettingRowView _focusedRow;
+        private SettingsUiElement _focusedRow;
 
         [Serializable]
         public struct CategoryDisplayData
@@ -178,6 +180,7 @@ namespace Void2610.SettingsSystem
                 var capturedCategory = category;
                 tabButton.OnClickAsObservable().Subscribe(_ => SwitchCategory(capturedCategory)).AddTo(_tabSubscriptions);
                 _tabButtons.Add(tabButton);
+                _tabElements.Add(new SettingsUiElement((RectTransform)tabObject.transform, tabText));
             }
             
             // タブボタンの横ナビゲーションを設定
@@ -209,19 +212,9 @@ namespace Void2610.SettingsSystem
                     if (container) container.SetActive(true);
             }
 
-            // タブボタンの見た目を更新
-            for (var i = 0; i < _tabButtons.Count && i < _categories.Length; i++)
-            {
-                var isSelected = _categories[i] == _currentCategory;
-                if (_tabButtons[i].TryGetComponent<SettingsTabView>(out var tabView))
-                {
-                    tabView.SetCurrent(isSelected);
-                    continue;
-                }
-                var colors = _tabButtons[i].colors;
-                colors.normalColor = isSelected ? new Color(0.8f, 0.8f, 0.8f, 1f) : Color.white;
-                _tabButtons[i].colors = colors;
-            }
+            // 作った直後のタブはまだ並んでいないので、位置を確定させてから渡す
+            if (_tabElements.Count > 0) LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)tabContainer);
+            focusView.ShowCurrentTab(_tabElements, _tabElements.Count > 0 ? Array.IndexOf(_categories, category) : -1);
 
             // ナビゲーションを再設定
             SetupNavigation();
@@ -236,7 +229,7 @@ namespace Void2610.SettingsSystem
             var containerObject = Instantiate(settingsContentContainerPrefab, settingsContainer);
             // タイトルテキストを作成（左側）
             var title = CreateTitleText(containerObject.transform, settingData.displayName);
-            if (containerObject.TryGetComponent<SettingRowView>(out var row)) row.SetLabel(title);
+            var row = new SettingsUiElement((RectTransform)containerObject.transform, title);
 
             // 設定固有のUIを作成（右側）
             var settingItem = settingData.type switch
@@ -259,7 +252,7 @@ namespace Void2610.SettingsSystem
                 {
                     if (!selectableGo) continue;
                     _settingDescriptions[selectableGo] = description;
-                    if (row) _settingRows[selectableGo] = row;
+                    _settingRows[selectableGo] = row;
                 }
             }
 
@@ -467,13 +460,15 @@ namespace Void2610.SettingsSystem
             foreach (var tabButton in _tabButtons.Where(t => t))
                 DestroyImmediate(tabButton.gameObject);
             _tabButtons.Clear();
+            _tabElements.Clear();
 
             // カテゴリコンテナをクリア
             _categoryContainers.Clear();
             _categorySettingItems.Clear();
             _settingDescriptions.Clear();
             _settingRows.Clear();
-            _focusedRow = null;
+            // 行を破棄する前に、見せ方の実装へ行を手放させる
+            FocusRow(null);
 
             // UI要素をDestroy
             foreach (var uiObject in _settingUIObjects.Where(uiObject => uiObject))
@@ -491,20 +486,26 @@ namespace Void2610.SettingsSystem
         private void Update()
         {
             var currentSelected = EventSystem.current?.currentSelectedGameObject;
-            if (!currentSelected || currentSelected == _lastSelectedObject) return;
+            if (currentSelected == _lastSelectedObject) return;
 
             _lastSelectedObject = currentSelected;
+            if (!currentSelected)
+            {
+                FocusRow(null);
+                return;
+            }
             if (descriptionText) descriptionText.text = _settingDescriptions.GetValueOrDefault(currentSelected, "");
             FocusRow(_settingRows.GetValueOrDefault(currentSelected));
         }
 
-        // タブや閉じるボタン、設定画面の外へ選択が移ったときは、どの行も強調しない
-        private void FocusRow(SettingRowView row)
+        // タブや閉じるボタン、設定画面の外へ選択が移ったとき・選択が外れたときは null を渡す
+        private void FocusRow(SettingsUiElement row)
         {
             if (_focusedRow == row) return;
-            if (_focusedRow) _focusedRow.SetFocused(false);
             _focusedRow = row;
-            if (row) row.SetFocused(true);
+            // カテゴリを切り替えた直後の行はまだ並んでいないので、位置を確定させてから渡す
+            if (row != null) LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)settingsContainer);
+            focusView.ShowFocusedRow(row);
         }
 
         private void OnDestroy()

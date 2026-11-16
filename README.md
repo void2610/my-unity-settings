@@ -117,10 +117,17 @@ public class ConfirmationDialogService : IConfirmationDialog
 
 ### 4. フォーカスと今のカテゴリの見せ方
 
-パッドやキーボードで動かしたとき、どこを選んでいるかが分かるように、次の 2 つを Prefab に付ける。どちらも付けなければ強調しない (タブはボタンの通常色で今のカテゴリを示す)。
+パッドやキーボードで動かしたとき、どこを選んでいるかが分かるように、`SettingsView` の `focusView` に見せ方の実装 (`SettingsFocusViewBase` の派生) を割り当てる。必須で、空だと最初の選択で例外になる。
 
-- **`SettingRowView`** (`settingsContentContainerPrefab` に付ける): 行の中のどの要素 (スライダー・列挙の前後ボタン等) が選ばれても、行全体をフォーカス中として示す。`focusIndicator` の CanvasGroup (下地の帯や印) を出し、項目名を `focusedLabelColor` にする。タブや閉じるボタンへ選択が移ると、どの行も強調しない
-- **`SettingsTabView`** (`tabButtonPrefab` に付ける): 今表示しているカテゴリのタブで `currentIndicator` (塗り等) を出し、`label` を `currentLabelColor` にする。フォーカスの印 (拡大等) とは別に、フォーカスが他にあっても常に出す
+いつ変わったかは `SettingsView` が決めて伝える。どう見せるかは実装が決める。
+
+- **`ShowFocusedRow(row)`**: フォーカスのある行が変わったとき。行の中のどの要素 (スライダー・列挙の前後ボタン等) が選ばれても同じ行を渡す。タブや閉じるボタン、設定画面の外へ選択が移ったとき、選択が外れたとき、行を作り直すときは null
+- **`ShowCurrentTab(tabs, currentIndex)`**: 今のカテゴリが変わったとき。全タブを渡す。フォーカスが他にあっても今のカテゴリは示し続ける
+- 渡す行とタブは位置が確定している (並べ直してから渡す)。カーソルを重ねる位置は `AnchoredPositionOver` で求められる
+
+既定の実装は **`SettingsFocusCursor`**。行とタブにそれぞれ 1 つのカーソルを重ね、名前の文字の色を変える。動きは付けず、その場で切り替える。カーソルは行のコンテナ・タブのコンテナの最初の子に置き、LayoutElement の ignoreLayout を立てる。
+
+動き (カーソルを滑らせる・フェードさせる) や、名前以外の色を変える見せ方は、プロジェクトで `SettingsFocusViewBase` を派生させて書く。基盤はアニメーションのライブラリに依存しない。
 
 ## フォルダ構成
 
