@@ -80,6 +80,7 @@ namespace Void2610.SettingsSystem
         private string[] _categories;
         private GameObject _lastSelectedObject;
         private SettingsUiElement _focusedRow;
+        private int _focusedTabIndex = -1;
 
         [Serializable]
         public struct CategoryDisplayData
@@ -461,6 +462,7 @@ namespace Void2610.SettingsSystem
                 DestroyImmediate(tabButton.gameObject);
             _tabButtons.Clear();
             _tabElements.Clear();
+            FocusTab(-1);
 
             // カテゴリコンテナをクリア
             _categoryContainers.Clear();
@@ -492,10 +494,19 @@ namespace Void2610.SettingsSystem
             if (!currentSelected)
             {
                 FocusRow(null);
+                FocusTab(-1);
                 return;
             }
             if (descriptionText) descriptionText.text = _settingDescriptions.GetValueOrDefault(currentSelected, "");
             FocusRow(_settingRows.GetValueOrDefault(currentSelected));
+            FocusTab(_tabButtons.FindIndex(tab => tab.gameObject == currentSelected));
+        }
+
+        private void FocusTab(int index)
+        {
+            if (_focusedTabIndex == index) return;
+            _focusedTabIndex = index;
+            focusView.ShowFocusedTab(index);
         }
 
         // タブや閉じるボタン、設定画面の外へ選択が移ったとき・選択が外れたときは null を渡す

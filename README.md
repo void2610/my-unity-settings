@@ -123,6 +123,7 @@ public class ConfirmationDialogService : IConfirmationDialog
 
 - **`ShowFocusedRow(row)`**: フォーカスのある行が変わったとき。行の中のどの要素 (スライダー・列挙の前後ボタン等) が選ばれても同じ行を渡す。タブや閉じるボタン、設定画面の外へ選択が移ったとき、選択が外れたとき、行を作り直すときは null
 - **`ShowCurrentTab(tabs, currentIndex)`**: 今のカテゴリが変わったとき。全タブを渡す。フォーカスが他にあっても今のカテゴリは示し続ける
+- **`ShowFocusedTab(index)`** (任意): フォーカスのあるタブが変わったとき。タブ以外へ移ると -1。既定では何もしない (タブのボタンの Transition で示せる)。今のタブかどうかと合わせて見せ方を決めるときに上書きする
 - 渡す行とタブは位置が確定している (並べ直してから渡す)。カーソルを重ねる位置は `AnchoredPositionOver` で求められる
 
 既定の実装は **`SettingsFocusCursor`**。行とタブにそれぞれ 1 つのカーソルを重ね、名前の文字の色を変える。動きは付けず、その場で切り替える。カーソルは行のコンテナ・タブのコンテナの最初の子に置き、LayoutElement の ignoreLayout を立てる。

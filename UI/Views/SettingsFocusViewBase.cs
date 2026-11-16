@@ -19,6 +19,12 @@ namespace Void2610.SettingsSystem
         public abstract void ShowCurrentTab(IReadOnlyList<SettingsUiElement> tabs, int currentIndex);
 
         /// <summary>
+        /// フォーカスのあるタブが変わったとき。index は <see cref="ShowCurrentTab"/> で渡したタブの番号で、タブ以外へ移ったときは -1
+        /// 既定では何もしない (タブのボタンの Transition で示せる)。今のタブかどうかと合わせて見せ方を決めるときに使う
+        /// </summary>
+        public virtual void ShowFocusedTab(int index) { }
+
+        /// <summary>
         /// target の中心に重なるときの cursor の anchoredPosition。cursor のアンカーは 1 点 (anchorMin == anchorMax) とする
         /// cursor を target と同じスクロールの中に置けば、スクロールしても重なったままになる
         /// </summary>
