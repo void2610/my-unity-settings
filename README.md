@@ -120,7 +120,7 @@ public class ConfirmationDialogService : IConfirmationDialog
 パッドやキーボードで動かしたとき、どこを選んでいるかが分かるように、次の 2 つを Prefab に付ける。どちらも付けなければ強調しない (タブはボタンの通常色で今のカテゴリを示す)。
 
 - **`SettingRowView`** (`settingsContentContainerPrefab` に付ける): 行の中のどの要素 (スライダー・列挙の前後ボタン等) が選ばれても、行全体をフォーカス中として示す。`focusIndicator` の CanvasGroup (下地の帯や印) を出し、項目名を `focusedLabelColor` にする。タブや閉じるボタンへ選択が移ると、どの行も強調しない
-- **`SettingsTabView`** (`tabButtonPrefab` に付ける): 今表示しているカテゴリのタブで `currentIndicator` (下線等) を出し、`label` を `currentLabelColor` にする。フォーカスの印 (拡大等) とは別に、フォーカスが他にあっても常に出す
+- **`SettingsTabView`** (`tabButtonPrefab` に付ける): 今表示しているカテゴリのタブで `currentIndicator` (塗り等) を出し、`label` を `currentLabelColor` にする。フォーカスの印 (拡大等) とは別に、フォーカスが他にあっても常に出す
 
 ## フォルダ構成
 
